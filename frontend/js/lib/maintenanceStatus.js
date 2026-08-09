@@ -50,12 +50,16 @@ function addDays(date, days) {
 }
 
 /**
+ * Whole calendar days between two dates (ignores time-of-day, so the result
+ * doesn't drift depending on what time "now" happens to be).
  * @param {Date} from
  * @param {Date} to
  * @returns {number}
  */
 function daysBetween(from, to) {
-  return Math.round((to.getTime() - from.getTime()) / MS_PER_DAY);
+  const fromMidnight = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const toMidnight = new Date(to.getFullYear(), to.getMonth(), to.getDate());
+  return Math.round((toMidnight.getTime() - fromMidnight.getTime()) / MS_PER_DAY);
 }
 
 /**

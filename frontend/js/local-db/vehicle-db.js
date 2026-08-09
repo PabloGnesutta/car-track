@@ -1,6 +1,6 @@
 import { dbStore } from "../common/state.js";
 import { clearArray } from "../lib/utils.js";
-import { getAll, putOne } from "../lib/indexedDb.js";
+import { deleteOne, getAll, putOne } from "../lib/indexedDb.js";
 
 
 /**
@@ -72,6 +72,35 @@ async function logMileage(vehicle, mileage, date = new Date()) {
 }
 
 /**
+ * Renames a vehicle. Mutates the given vehicle.
+ * @param {Vehicle} vehicle
+ * @param {string} name
+ * @param {Date} [date]
+ * @returns {ServiceReturn<Vehicle>}
+ */
+async function updateVehicle(vehicle, name, date = new Date()) {
+  if (!vehicle._key) { return { errorMsg: 'Llave no provista' }; }
+  name = name.trim();
+  if (!name) { return { errorMsg: 'Ingresar nombre' }; }
+
+  vehicle.name = name;
+  vehicle.updatedAt = date;
+  await putOne('vehicles', vehicle, vehicle._key);
+  return { data: vehicle };
+}
+
+/**
+ * Deletes a vehicle record. Does not cascade — callers are responsible for
+ * deleting its maintenance items/service history first (see
+ * `deleteAllItemsForVehicle` in maintenance-ui.js).
+ * @param {IDBValidKey} vehicleKey
+ * @returns {Promise<IDBValidKey>}
+ */
+async function deleteVehicle(vehicleKey) {
+  return deleteOne('vehicles', vehicleKey);
+}
+
+/**
  * Fetch all vehicles. Stores them in dbStore.
  * @returns {Promise<Vehicle[]>}
  */
@@ -112,4 +141,7 @@ function resolveCurrentVehicle(vehicles) {
 }
 
 
-export { createVehicle, logMileage, fetchVehicles, setLastUsedVehicleKey, getLastUsedVehicleKey, resolveCurrentVehicle };
+export {
+  createVehicle, updateVehicle, deleteVehicle, logMileage, fetchVehicles,
+  setLastUsedVehicleKey, getLastUsedVehicleKey, resolveCurrentVehicle,
+};

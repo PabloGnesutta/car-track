@@ -1,9 +1,9 @@
 import { appState, dataState, dbStore, setStateField } from "../common/state.js";
 import { $, $button, $getInner, $queryOne } from "../lib/dom.js";
 import { _info, _log, _warn, openLogs } from "../lib/logger.js";
-import { arrow_left, pen_solid, svg_trash } from "../svg/svgFn.js";
+import { arrow_left, pen_solid, svg_check, svg_trash } from "../svg/svgFn.js";
 import {
-  openAddVehicleFromSwitcher, openMileageForm, openVehicleSwitcher,
+  deleteVehicleFromForm, editVehicle, openAddVehicle, openMileageForm,
   submitMileageForm, submitVehicleForm, switchVehicle,
 } from "./vehicle-ui.js";
 import {
@@ -34,16 +34,28 @@ function initUi() {
     }
   });
 
-  $('vehicleSwitcherBtn').addEventListener('click', () => { openVehicleSwitcher(); });
   $('logMileageBtn').addEventListener('click', () => { openMileageForm(); });
   $('newItemBtn').addEventListener('click', () => { openItemForm(false); });
-  $('addVehicleBtn').addEventListener('click', () => { openAddVehicleFromSwitcher(); });
-  $('markServicedBtn').addEventListener('click', () => { openServiceForm(); });
+
+  $button({
+    label: 'Marcar como realizado',
+    svgFn: svg_check,
+    class: 'horizontal',
+    listener: { fn: openServiceForm },
+    appendTo: $('markServicedBtn'),
+  });
 
   $button({
     label: 'Agregar Vehículo',
     listener: { fn: submitVehicleForm },
     appendTo: $queryOne('#vehicleForm .submit'),
+  });
+
+  $button({
+    // Borrar Vehículo (only shown while editing an existing one)
+    listener: { fn: deleteVehicleFromForm },
+    svgFn: svg_trash,
+    appendTo: $('deleteVehicleBtn'),
   });
 
   $button({
@@ -87,7 +99,9 @@ function initUi() {
       target.select();
       return;
     }
-    if (!(target instanceof HTMLElement)) { return; }
+    // Note: `instanceof Element` (not HTMLElement) so clicks landing on an
+    // inline <svg>/<path> icon (an SVGElement) aren't silently dropped.
+    if (!(target instanceof Element)) { return; }
     const clickElement = target.closest('[data-click-action]');
     if (!clickElement) { return; }
     if (!('dataset' in clickElement)) { return; }
@@ -99,6 +113,12 @@ function initUi() {
         break;
       case 'switchVehicle':
         switchVehicle(dataset.vehicleKey || '');
+        break;
+      case 'editVehicle':
+        editVehicle(dataset.vehicleKey || '');
+        break;
+      case 'openAddVehicle':
+        openAddVehicle();
         break;
       case 'deleteServiceRecord':
         tryDeleteServiceRecord(dataset.serviceKey || '', dataset.itemKey || '');
@@ -117,7 +137,6 @@ function modalBackdropHandler() {
     if (clickedBackdrop) {
       setStateField('editingItem', false);
       setStateField('showVehicleForm', false);
-      setStateField('showVehicleSwitcher', false);
       setStateField('showMileageForm', false);
       setStateField('showItemForm', false);
       setStateField('showServiceForm', false);

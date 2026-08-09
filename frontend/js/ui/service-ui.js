@@ -1,9 +1,10 @@
-import { timeAgo, toYYYYMMDD } from "../lib/date.js";
+import { fromYYYYMMDD, timeAgo, toYYYYMMDD } from "../lib/date.js";
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
 import { putOne } from "../lib/indexedDb.js";
 import { dataState, dbStore, setStateField } from "../common/state.js";
 import { deleteServiceRecord, getServiceHistory, markItemServiced } from "../local-db/service-db.js";
+import { showUndoToast } from "../lib/toast.js";
 import { svg_notes, svg_trash } from "../svg/svgFn.js";
 import { refreshAfterService } from "./maintenance-ui.js";
 
@@ -97,7 +98,7 @@ async function submitServiceForm(e) {
   const formData = new FormData(serviceForm);
   const mileage = Number(formData.get('serviceMileage'));
   const dateStr = formData.get('serviceDate')?.toString();
-  const date = dateStr ? new Date(dateStr) : new Date();
+  const date = dateStr ? fromYYYYMMDD(dateStr) : new Date();
   const notes = formData.get('serviceNotes')?.toString() || '';
 
   const result = await markItemServiced(item, mileage, date, notes);
@@ -115,13 +116,19 @@ async function submitServiceForm(e) {
  * @param {string} itemKey
  */
 async function tryDeleteServiceRecord(serviceKey, itemKey) {
-  if (!confirm('¿Seguro que querés borrar este registro?')) { return; }
-
   const strItemKey = itemKey;
   const history = dbStore.serviceHistory[strItemKey] || [];
   const key = +serviceKey;
   const record = history.find(r => r._key === key);
   if (!record) { return; }
+
+  // If the deleted record is the item's denormalized last-service, snapshot
+  // it so it can be restored on undo.
+  const item = dataState.currentItem;
+  const wasLastServiceRecord = !!(item && item._key && item._key.toString() === strItemKey && item.lastServiceRecord?._key === key);
+  const previousLastService = wasLastServiceRecord
+    ? { record: item.lastServiceRecord, mileage: item.lastServiceMileage, date: item.lastServiceDate }
+    : null;
 
   await deleteServiceRecord(record);
 
@@ -131,10 +138,8 @@ async function tryDeleteServiceRecord(serviceKey, itemKey) {
   const row = $queryOne(`[data-service-key="${serviceKey}"]`);
   if (row) { row.remove(); }
 
-  // If the deleted record was the item's denormalized last-service, fall back
-  // to the next most recent one (history is kept newest-first).
-  const item = dataState.currentItem;
-  if (item && item._key && item._key.toString() === strItemKey && item.lastServiceRecord?._key === key) {
+  // Fall back to the next most recent record (history is kept newest-first).
+  if (wasLastServiceRecord && item) {
     const next = history[0] || null;
     item.lastServiceRecord = next;
     if (next) {
@@ -148,6 +153,23 @@ async function tryDeleteServiceRecord(serviceKey, itemKey) {
   if (!history.length) {
     historyList.innerHTML = 'No hay servicios registrados para este ítem';
   }
+
+  showUndoToast('Registro de servicio eliminado', async () => {
+    await putOne('serviceHistory', record, record._key);
+    history.unshift(record);
+
+    if (wasLastServiceRecord && item && previousLastService) {
+      item.lastServiceRecord = previousLastService.record;
+      item.lastServiceMileage = previousLastService.mileage;
+      item.lastServiceDate = previousLastService.date;
+      await putOne('maintenanceItems', item, item._key);
+      await refreshAfterService(item);
+    }
+
+    if (dataState.currentItem && dataState.currentItem._key && dataState.currentItem._key.toString() === strItemKey) {
+      await populateServiceHistory(dataState.currentItem);
+    }
+  });
 }
 
 

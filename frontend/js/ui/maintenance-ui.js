@@ -1,13 +1,18 @@
-import { toYYYYMMDD } from "../lib/date.js";
+import { fromYYYYMMDD, toYYYYMMDD } from "../lib/date.js";
 import { _error } from "../lib/logger.js";
 import { matches, normalize } from "../lib/string.js";
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { appState, dataState, dbStore, setCurrentView, setStateField } from "../common/state.js";
-import { createMaintenanceItem, deleteMaintenanceItem, fetchMaintenanceItems, updateMaintenanceItem } from "../local-db/maintenance-db.js";
-import { deleteItemHistory } from "../local-db/service-db.js";
+import {
+  createMaintenanceItem, deleteMaintenanceItem, restoreMaintenanceItem, deleteMaintenanceItemsForVehicle,
+  fetchMaintenanceItems, updateMaintenanceItem,
+} from "../local-db/maintenance-db.js";
+import { deleteItemHistory, restoreServiceRecords } from "../local-db/service-db.js";
 import { computeStatus, formatDueDetail } from "../lib/maintenanceStatus.js";
+import { showUndoToast } from "../lib/toast.js";
 import { pageTitle } from "./ui.js";
 import { populateServiceHistory } from "./service-ui.js";
+import { renderVehicleChips } from "./vehicle-ui.js";
 
 
 /**
@@ -24,6 +29,7 @@ const itemName = $getInner(singleItemView, '.name');
 const statusBadge = $getInner(singleItemView, '.status-badge');
 const dueDetail = $getInner(singleItemView, '.due-detail');
 const intervalDetail = $getInner(singleItemView, '.interval-detail');
+const notesDetail = $getInner(singleItemView, '.notes-detail');
 
 const itemForm = $form('itemForm');
 const itemNameInput = $queryOneInput('#itemForm input[name="itemName"]');
@@ -64,7 +70,15 @@ searchInput.addEventListener('input', e => {
 async function fetchAndRenderMaintenanceItems(vehicle) {
   const items = await fetchMaintenanceItems(vehicle._key || '', vehicle.currentMileage, vehicle.currentMileageDate);
   itemList.innerHTML = '';
-  items.forEach(item => appendItemRow(item, vehicle));
+  if (!items.length) {
+    itemList.append($new({
+      class: 'empty-state',
+      text: 'No hay ítems de mantenimiento todavía. Tocá + para agregar uno.',
+    }));
+  } else {
+    items.forEach(item => appendItemRow(item, vehicle));
+  }
+  await renderVehicleChips();
 }
 
 /** Open the maintenance list view */
@@ -81,6 +95,11 @@ function appendItemRow(item, vehicle) {
   const key = (item._key || '').toString();
   const { status, kmRemaining, daysRemaining } = computeStatus(item, vehicle.currentMileage, vehicle.currentMileageDate);
 
+  const nameChildren = [$new({ class: 'itemName', text: item.name })];
+  if (item.notes) {
+    nameChildren.push($new({ class: 'itemMeta', text: item.notes }));
+  }
+
   const row = $new({
     class: 'row',
     dataset: [
@@ -89,7 +108,7 @@ function appendItemRow(item, vehicle) {
       ['status', status],
     ],
     children: [
-      $new({ class: 'itemName', text: item.name }),
+      $new({ class: 'left-side', children: nameChildren }),
       $new({
         class: 'right-side',
         children: [
@@ -165,7 +184,7 @@ async function submitItemForm(e) {
     const lastServiceMileage = formData.get('lastServiceMileage')
       ? Number(formData.get('lastServiceMileage')) : vehicle.currentMileage;
     const lastServiceDateStr = formData.get('lastServiceDate')?.toString();
-    const lastServiceDate = lastServiceDateStr ? new Date(lastServiceDateStr) : new Date();
+    const lastServiceDate = lastServiceDateStr ? fromYYYYMMDD(lastServiceDateStr) : new Date();
 
     const result = await createMaintenanceItem(vehicle._key || '', name, {
       intervalKm, intervalDays, notes, lastServiceMileage, lastServiceDate,
@@ -213,12 +232,15 @@ function renderItemDetail(item, vehicle) {
   itemName.innerText = item.name;
   statusBadge.innerText = STATUS_LABELS[status];
   statusBadge.dataset.status = status;
+  dueDetail.dataset.status = status;
   dueDetail.innerText = formatDueDetail({ status, kmRemaining, daysRemaining });
 
   const intervalParts = [];
   if (item.intervalKm) { intervalParts.push(`${item.intervalKm.toLocaleString('es')} km`); }
   if (item.intervalDays) { intervalParts.push(`${item.intervalDays} días`); }
   intervalDetail.innerText = 'Cada ' + intervalParts.join(' / ');
+
+  notesDetail.innerText = item.notes || '';
 }
 
 function closeSingleItem() {
@@ -233,7 +255,8 @@ async function tryDeleteItem() {
   if (!item || !vehicle) { return; }
   const itemKey = item._key;
   if (!itemKey) { return; }
-  if (!confirm(`¿Seguro que querés borrar "${item.name}"?`)) { return; }
+
+  const historySnapshot = (dbStore.serviceHistory[itemKey.toString()] || []).slice();
 
   await deleteMaintenanceItem(itemKey);
   await deleteItemHistory(itemKey);
@@ -246,6 +269,25 @@ async function tryDeleteItem() {
 
   dataState.currentItem = null;
   await fetchAndRenderMaintenanceItems(vehicle);
+
+  showUndoToast(`"${item.name}" eliminado`, async () => {
+    await restoreMaintenanceItem(item);
+    await restoreServiceRecords(historySnapshot);
+    dbStore.serviceHistory[itemKey.toString()] = historySnapshot;
+    await fetchAndRenderMaintenanceItems(vehicle);
+  });
+}
+
+/**
+ * Deletes all maintenance items (and their service history) for a vehicle
+ * that's about to be deleted.
+ * @param {IDBValidKey} vehicleKey
+ */
+async function deleteAllItemsForVehicle(vehicleKey) {
+  const itemKeys = await deleteMaintenanceItemsForVehicle(vehicleKey);
+  for (const itemKey of itemKeys) {
+    await deleteItemHistory(itemKey);
+  }
 }
 
 /**
@@ -263,5 +305,5 @@ async function refreshAfterService(item) {
 
 export {
   fetchAndRenderMaintenanceItems, openMaintenanceList, openItemForm, submitItemForm,
-  openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService,
+  openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService, deleteAllItemsForVehicle,
 };

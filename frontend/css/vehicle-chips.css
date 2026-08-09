@@ -1,0 +1,86 @@
+.vehicle-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0.75rem;
+  background-color: #000e1c;
+}
+
+.vehicle-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background-color: #1e2c47;
+  border: 1px solid transparent;
+  color: #ccc;
+}
+
+.vehicle-chip:active {
+  background-color: #26385c;
+}
+
+.vehicle-chip.active {
+  background-color: #2c4066;
+  border-color: white;
+  color: white;
+}
+
+.vehicle-chip .vehicleName {
+  font-size: 16px;
+  max-width: 40vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vehicle-chip .icon-btn {
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  padding: 6px;
+  border-radius: 6px;
+  color: inherit;
+  opacity: 0.8;
+}
+
+.vehicle-chip .icon-btn:active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.vehicle-chip.add-chip {
+  justify-content: center;
+  width: 34px;
+  padding: 6px;
+  font-size: 18px;
+  line-height: 1;
+  color: #999;
+  border: 1px dashed #555;
+  background-color: transparent;
+}
+
+.vehicle-chip.add-chip:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.vehicle-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vehicle-badge.overdue {
+  background-color: var(--status-overdue);
+}
+
+.vehicle-badge.due-soon {
+  background-color: var(--status-due-soon);
+}

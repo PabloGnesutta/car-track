@@ -14,7 +14,6 @@ import { _log } from "../lib/logger.js";
  * @property {boolean} onboarding Forces the vehicle form open and blocks dismissal until a first vehicle exists
  * @property {boolean} editingItem
  * @property {boolean} showVehicleForm
- * @property {boolean} showVehicleSwitcher
  * @property {boolean} showMileageForm
  * @property {boolean} showItemForm
  * @property {boolean} showServiceForm
@@ -43,7 +42,6 @@ const appState = {
     onboarding: false,
     editingItem: false,
     showVehicleForm: false,
-    showVehicleSwitcher: false,
     showMileageForm: false,
     showItemForm: false,
     showServiceForm: false,
@@ -94,7 +92,6 @@ function initAppState() {
     setStateField('onboarding', false);
     setStateField('editingItem', false);
     setStateField('showVehicleForm', false);
-    setStateField('showVehicleSwitcher', false);
     setStateField('showMileageForm', false);
     setStateField('showItemForm', false);
     setStateField('showServiceForm', false);

@@ -2,7 +2,7 @@ import { dbStore } from "../common/state.js";
 import { normalize } from "../lib/string.js";
 import { clearArray } from "../lib/utils.js";
 import { computeStatus } from "../lib/maintenanceStatus.js";
-import { deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb.js";
+import { deleteMany, deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb.js";
 
 
 /**
@@ -110,6 +110,34 @@ async function deleteMaintenanceItem(itemKey) {
 }
 
 /**
+ * Re-inserts a previously deleted maintenance item under its original key.
+ * Used to support "undo" right after a delete action.
+ * @param {MaintenanceItem} item
+ * @returns {ServiceReturn<MaintenanceItem>}
+ */
+async function restoreMaintenanceItem(item) {
+  if (!item._key) { return { errorMsg: 'Ítem sin llave' }; }
+  await putOne('maintenanceItems', item, item._key);
+  dbStore.maintenanceItems.push(item);
+  return { data: item };
+}
+
+/**
+ * Deletes all maintenance items for the given vehicle (used when the vehicle
+ * itself is deleted). Returns the deleted items' keys so their service
+ * history can be cleaned up too.
+ * @param {IDBValidKey} vehicleKey
+ * @returns {Promise<IDBValidKey[]>}
+ */
+async function deleteMaintenanceItemsForVehicle(vehicleKey) {
+  /** @type {MaintenanceItem[]} */ // @ts-ignore
+  const items = await getAllWithIndex('maintenanceItems', 'vehicleKey', vehicleKey);
+  const keys = /** @type {IDBValidKey[]} */ (items.map(i => i._key).filter(k => k != null));
+  await deleteMany('maintenanceItems', 'vehicleKey', vehicleKey);
+  return keys;
+}
+
+/**
  * Fetch all maintenance items for the given vehicle, sorted by urgency
  * (overdue -> due-soon -> ok) then name. Stores them in dbStore.
  * @param {IDBValidKey} vehicleKey
@@ -135,5 +163,30 @@ async function fetchMaintenanceItems(vehicleKey, currentMileage, currentDate) {
   return items;
 }
 
+/**
+ * Counts overdue/due-soon items for the given vehicle, independent of
+ * dbStore's cache (which only holds the currently active vehicle's items).
+ * Used for the vehicle chip row's badges.
+ * @param {IDBValidKey} vehicleKey
+ * @param {number} currentMileage
+ * @param {Date} currentDate
+ * @returns {Promise<{overdue: number, dueSoon: number}>}
+ */
+async function countItemsByStatus(vehicleKey, currentMileage, currentDate) {
+  /** @type {MaintenanceItem[]} */ // @ts-ignore
+  const items = await getAllWithIndex('maintenanceItems', 'vehicleKey', vehicleKey);
+  let overdue = 0;
+  let dueSoon = 0;
+  items.forEach(item => {
+    const { status } = computeStatus(item, currentMileage, currentDate);
+    if (status === 'overdue') { overdue++; }
+    else if (status === 'due-soon') { dueSoon++; }
+  });
+  return { overdue, dueSoon };
+}
 
-export { createMaintenanceItem, updateMaintenanceItem, deleteMaintenanceItem, fetchMaintenanceItems };
+
+export {
+  createMaintenanceItem, updateMaintenanceItem, deleteMaintenanceItem, restoreMaintenanceItem, deleteMaintenanceItemsForVehicle,
+  fetchMaintenanceItems, countItemsByStatus,
+};

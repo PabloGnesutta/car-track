@@ -1,8 +1,10 @@
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
-import { appState, dataState, dbStore, setStateField } from "../common/state.js";
-import { createVehicle, logMileage, setLastUsedVehicleKey } from "../local-db/vehicle-db.js";
-import { fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenance-ui.js";
+import { pen_solid } from "../svg/svgFn.js";
+import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
+import { countItemsByStatus } from "../local-db/maintenance-db.js";
+import { deleteAllItemsForVehicle, fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenance-ui.js";
+import { dataState, dbStore, setStateField } from "../common/state.js";
 
 
 /**
@@ -12,15 +14,21 @@ import { fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenan
 const vehicleForm = $form('vehicleForm');
 const vehicleNameInput = $queryOneInput('#vehicleForm input[name="vehicleName"]');
 const vehicleMileageInput = $queryOneInput('#vehicleForm input[name="vehicleMileage"]');
+const initialMileageInputContainer = $queryOne('#vehicleForm .initial-mileage-input');
+const formTitleText = $getInner(vehicleForm, '.form-title-text');
+const deleteVehicleBtn = $('deleteVehicleBtn');
+const submitVehicleBtn = $queryOne('#vehicleForm .submit');
 
-const vehicleSwitcher = $('vehicleSwitcher');
-const vehicleList = $getInner(vehicleSwitcher, '.vehicle-list');
-const vehicleSwitcherBtn = $('vehicleSwitcherBtn');
+const chipsContainer = $queryOne('#maintenanceListView .vehicle-chips');
 
 const mileageForm = $form('mileageForm');
 const mileageInput = $queryOneInput('#mileageForm input[name="mileage"]');
 
 const mileageValue = $queryOne('#maintenanceListView .vehicle-summary .mileage .value');
+
+/** Vehicle currently being renamed/deleted via the form, if any. */
+/** @type {Vehicle|null} */
+let vehicleBeingEdited = null;
 
 // Intercept native form submission (e.g. pressing Enter in a field) so it
 // doesn't navigate the browser away with the field as a GET query string.
@@ -29,29 +37,57 @@ mileageForm.addEventListener('submit', submitMileageForm);
 
 
 /**
- * Open the "new vehicle" modal.
- * @param {boolean} onboarding - When true, blocks dismissal until a vehicle is created.
+ * Open the "new/edit vehicle" modal.
+ * @param {boolean} [onboarding] - When true, blocks dismissal until a vehicle is created.
+ * @param {Vehicle|null} [editTarget] - When given, edits this vehicle instead of creating a new one.
  */
-function openVehicleForm(onboarding = false) {
-  setStateField('showVehicleSwitcher', false);
+function openVehicleForm(onboarding = false, editTarget = null) {
   if (onboarding) {
     setStateField('onboarding', true);
   }
+
+  const submitLabel = $getInner(submitVehicleBtn, '.label');
+  vehicleBeingEdited = editTarget;
+
+  if (editTarget) {
+    vehicleNameInput.value = editTarget.name;
+    formTitleText.innerText = 'Editar Vehículo';
+    submitLabel.innerText = 'Guardar Cambios';
+    deleteVehicleBtn.classList.remove('display-none');
+    initialMileageInputContainer.classList.add('display-none');
+  } else {
+    vehicleForm.reset();
+    formTitleText.innerText = 'Nuevo Vehículo';
+    submitLabel.innerText = 'Agregar Vehículo';
+    deleteVehicleBtn.classList.add('display-none');
+    initialMileageInputContainer.classList.remove('display-none');
+  }
+
   setStateField('showVehicleForm', true);
   vehicleNameInput.focus();
 }
 
 /**
- * Creates the vehicle and activates it as current.
+ * Creates or renames the vehicle, depending on whether it was opened for editing.
  * @param {Event} e
  */
 async function submitVehicleForm(e) {
   e.preventDefault();
   const formData = new FormData(vehicleForm);
   const name = formData.get('vehicleName') || '';
-  const mileage = Number(formData.get('vehicleMileage'));
   if (typeof name !== 'string') { return; }
 
+  if (vehicleBeingEdited) {
+    const result = await updateVehicle(vehicleBeingEdited, name);
+    if (!result.data) { return _error(result.errorMsg); }
+    vehicleBeingEdited = null;
+    vehicleForm.reset();
+    setStateField('showVehicleForm', false);
+    await renderVehicleChips();
+    return;
+  }
+
+  const mileage = Number(formData.get('vehicleMileage'));
   const result = await createVehicle(name, mileage);
   if (!result.data) {
     return _error(result.errorMsg);
@@ -65,24 +101,54 @@ async function submitVehicleForm(e) {
 }
 
 /**
- * Sets the given vehicle as current, updates the header/summary,
- * and fetches+renders its maintenance items.
+ * Deletes the vehicle currently open in the edit form, and all of its
+ * maintenance items/service history.
+ */
+async function deleteVehicleFromForm() {
+  const vehicle = vehicleBeingEdited;
+  if (!vehicle) { return; }
+  if (!confirm(`¿Seguro que querés borrar "${vehicle.name}" y todos sus ítems de mantenimiento?`)) { return; }
+
+  const vehicleKey = vehicle._key;
+  if (!vehicleKey) { return; }
+
+  vehicleBeingEdited = null;
+  vehicleForm.reset();
+  setStateField('showVehicleForm', false);
+
+  await deleteAllItemsForVehicle(vehicleKey);
+  await deleteVehicle(vehicleKey);
+
+  const idx = dbStore.vehicles.findIndex(v => v._key === vehicleKey);
+  if (idx !== -1) { dbStore.vehicles.splice(idx, 1); }
+
+  if (dataState.currentVehicle?._key === vehicleKey) {
+    const next = resolveCurrentVehicle(dbStore.vehicles);
+    if (next) {
+      await activateVehicle(next);
+    } else {
+      dataState.currentVehicle = null;
+      openVehicleForm(true);
+      return;
+    }
+  }
+
+  await renderVehicleChips();
+}
+
+/**
+ * Sets the given vehicle as current, updates the summary, fetches+renders
+ * its maintenance items (which also refreshes the chips), and opens the list.
  * @param {Vehicle} vehicle
  */
 async function activateVehicle(vehicle) {
   dataState.currentVehicle = vehicle;
   setLastUsedVehicleKey(vehicle._key || '');
 
-  updateVehicleHeader(vehicle);
   updateMileageDisplay(vehicle);
 
   await fetchAndRenderMaintenanceItems(vehicle);
   openMaintenanceList();
-}
-
-/** @param {Vehicle} vehicle */
-function updateVehicleHeader(vehicle) {
-  vehicleSwitcherBtn.innerText = vehicle.name;
 }
 
 /** @param {Vehicle} vehicle */
@@ -91,30 +157,52 @@ function updateMileageDisplay(vehicle) {
 }
 
 /**
- * Opens the vehicle switcher modal, listing all vehicles.
+ * Renders the vehicle chip row: one chip per vehicle (name + overdue/due-soon
+ * badges + rename icon), the active one highlighted, plus a trailing "+"
+ * chip to add another. Called whenever vehicles or maintenance items change.
  */
-function openVehicleSwitcher() {
-  renderVehicleSwitcherList();
-  setStateField('showVehicleSwitcher', true);
-}
-
-function renderVehicleSwitcherList() {
-  vehicleList.innerHTML = '';
+async function renderVehicleChips() {
+  chipsContainer.innerHTML = '';
   const currentKey = dataState.currentVehicle?._key;
-  dbStore.vehicles.forEach(vehicle => {
-    const row = $new({
-      class: 'row' + (vehicle._key === currentKey ? ' selected' : ''),
+  const today = new Date();
+
+  for (const vehicle of dbStore.vehicles) {
+    const key = (vehicle._key || '').toString();
+    const { overdue, dueSoon } = await countItemsByStatus(vehicle._key || '', vehicle.currentMileage, today);
+
+    /** @type {HTMLElement[]} */
+    const badges = [];
+    if (overdue > 0) {
+      badges.push($new({ class: 'vehicle-badge overdue', text: String(overdue) }));
+    }
+    if (dueSoon > 0) {
+      badges.push($new({ class: 'vehicle-badge due-soon', text: String(dueSoon) }));
+    }
+
+    const chip = $new({
+      class: 'vehicle-chip' + (vehicle._key === currentKey ? ' active' : ''),
       dataset: [
         ['clickAction', 'switchVehicle'],
-        ['vehicleKey', (vehicle._key || '').toString()],
+        ['vehicleKey', key],
       ],
       children: [
         $new({ class: 'vehicleName', text: vehicle.name }),
-        $new({ class: 'vehicleMileage', text: vehicle.currentMileage.toLocaleString('es') + ' km' }),
+        ...badges,
+        $new({
+          class: 'icon-btn',
+          html: pen_solid(),
+          dataset: [['clickAction', 'editVehicle'], ['vehicleKey', key]],
+        }),
       ],
     });
-    vehicleList.append(row);
-  });
+    chipsContainer.append(chip);
+  }
+
+  chipsContainer.append($new({
+    class: 'vehicle-chip add-chip',
+    text: '+',
+    dataset: [['clickAction', 'openAddVehicle']],
+  }));
 }
 
 /**
@@ -122,19 +210,24 @@ function renderVehicleSwitcherList() {
  */
 async function switchVehicle(vehicleKey) {
   const key = +vehicleKey;
-  if (key === dataState.currentVehicle?._key) {
-    setStateField('showVehicleSwitcher', false);
-    return;
-  }
+  if (key === dataState.currentVehicle?._key) { return; }
   const vehicle = dbStore.vehicles.find(v => v._key === key);
   if (!vehicle) { return; }
 
-  setStateField('showVehicleSwitcher', false);
   await activateVehicle(vehicle);
 }
 
-function openAddVehicleFromSwitcher() {
+function openAddVehicle() {
   openVehicleForm(false);
+}
+
+/**
+ * @param {string} vehicleKey
+ */
+function editVehicle(vehicleKey) {
+  const vehicle = dbStore.vehicles.find(v => v._key === +vehicleKey);
+  if (!vehicle) { return; }
+  openVehicleForm(false, vehicle);
 }
 
 /**
@@ -174,7 +267,7 @@ async function submitMileageForm(e) {
 
 
 export {
-  openVehicleForm, submitVehicleForm, activateVehicle,
-  openVehicleSwitcher, switchVehicle, openAddVehicleFromSwitcher,
+  openVehicleForm, submitVehicleForm, deleteVehicleFromForm, activateVehicle,
+  renderVehicleChips, switchVehicle, openAddVehicle, editVehicle,
   openMileageForm, submitMileageForm,
 };

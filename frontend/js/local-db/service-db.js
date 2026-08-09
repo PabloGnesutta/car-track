@@ -81,6 +81,20 @@ async function deleteServiceRecord(record) {
 }
 
 /**
+ * Re-inserts previously deleted service records under their original keys.
+ * Used to support "undo" for both a single record delete and a maintenance
+ * item delete (which cascades to its whole history).
+ * @param {ServiceRecord[]} records
+ */
+async function restoreServiceRecords(records) {
+  for (const record of records) {
+    if (record._key) {
+      await putOne('serviceHistory', record, record._key);
+    }
+  }
+}
+
+/**
  * Deletes all service history for the given item.
  * @param {IDBValidKey} itemKey
  * @returns {Promise<boolean>}
@@ -90,4 +104,4 @@ async function deleteItemHistory(itemKey) {
 }
 
 
-export { markItemServiced, getServiceHistory, deleteServiceRecord, deleteItemHistory };
+export { markItemServiced, getServiceHistory, deleteServiceRecord, restoreServiceRecords, deleteItemHistory };

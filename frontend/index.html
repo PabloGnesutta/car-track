@@ -23,6 +23,8 @@
   <link rel="stylesheet" href="css/btn.css" />
   <link rel="stylesheet" href="css/input.css" />
   <link rel="stylesheet" href="css/service.css" />
+  <link rel="stylesheet" href="css/vehicle-chips.css" />
+  <link rel="stylesheet" href="css/toast.css" />
 
   <script src="js/app.js" type="module" defer></script>
 </head>
@@ -32,13 +34,14 @@
   <div id="app">
     <header id="mainHeader">
       <div class="page-title"></div>
-      <div id="vehicleSwitcherBtn" class="vehicle-switcher-btn"></div>
       <div id="goBack2" class="go-back"></div>
     </header>
 
     <div class="views">
       <!-- Maintenance List -->
       <div id="maintenanceListView" class="page">
+        <div class="vehicle-chips"><!--  --></div>
+
         <div class="vehicle-summary">
           <div class="mileage"><span class="value">0</span> km</div>
           <div id="logMileageBtn" role="button" class="base-button">Actualizar km</div>
@@ -71,10 +74,11 @@
           <div class="status-badge"><!-- --></div>
           <div class="due-detail"><!-- --></div>
           <div class="interval-detail"><!-- --></div>
+          <div class="notes-detail"><!-- --></div>
         </div>
 
         <div class="btns">
-          <div id="markServicedBtn" role="button" class="base-button">Marcar como realizado</div>
+          <div id="markServicedBtn"></div>
         </div>
 
         <div class="service-history-container">
@@ -91,32 +95,24 @@
       </div>
 
       <div class="content">
-        <!-- Vehicle Form (Create) -->
+        <!-- Vehicle Form (Create/Edit) -->
         <form id="vehicleForm" class="base-form">
-          <h3 class="form-title">Nuevo Vehículo</h3>
+          <h3 class="form-title">
+            <span class="form-title-text">Nuevo Vehículo</span>
+            <div id="deleteVehicleBtn" class="display-none"></div>
+          </h3>
           <div class="form-content">
             <div class="form-control">
               <label for="vehicleName">Nombre</label>
               <input type="text" name="vehicleName" placeholder="ej. Honda Civic" />
             </div>
-            <div class="form-control">
+            <div class="form-control initial-mileage-input">
               <label for="vehicleMileage">Kilometraje actual</label>
               <input type="number" step="1" min="0" name="vehicleMileage" />
             </div>
             <div class="submit"><!--  --></div>
           </div>
         </form>
-
-        <!-- Vehicle Switcher -->
-        <div id="vehicleSwitcher" class="base-form">
-          <h3 class="form-title">Cambiar de vehículo</h3>
-          <div class="form-content">
-            <div class="vehicle-list"><!--  --></div>
-            <div class="submit">
-              <div id="addVehicleBtn" role="button" class="base-button">&plus; Agregar vehículo</div>
-            </div>
-          </div>
-        </div>
 
         <!-- Mileage Form -->
         <form id="mileageForm" class="base-form">
@@ -200,6 +196,12 @@
   <div id="updateBanner" class="folded">
     <p>Hay una nueva versión disponible</p>
     <button id="refreshPageBtn">Refrescá la página para actualizar</button>
+  </div>
+
+  <!-- Undo toast -->
+  <div id="undoToast" class="folded">
+    <span class="message"></span>
+    <div id="undoBtn" role="button" class="undo-btn">Deshacer</div>
   </div>
 
   <!-- Logger -->

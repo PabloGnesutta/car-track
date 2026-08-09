@@ -59,4 +59,17 @@ function toYYYYMMDD(date) {
 }
 
 
-export { timeAgo, toYYYYMMDD };
+/**
+ * Parses a "YYYY-MM-DD" string (e.g. from a date input) as local midnight,
+ * not UTC midnight. `new Date("YYYY-MM-DD")` parses as UTC, which silently
+ * shifts the calendar day by the timezone offset for anyone not on UTC+0.
+ * @param {string} str
+ * @returns {Date}
+ */
+function fromYYYYMMDD(str) {
+    const [year, month, day] = str.split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+
+export { timeAgo, toYYYYMMDD, fromYYYYMMDD };
