@@ -1,0 +1,74 @@
+/* Vehicle switcher */
+#vehicleSwitcher {
+  --title-bg: #1e1e1e;
+  --content-bg: #06101c;
+  background-color: black;
+}
+
+#vehicleSwitcher .vehicle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+
+#vehicleSwitcher .vehicle-list .row {
+  background-color: #1e2c47;
+}
+
+#vehicleSwitcher .vehicle-list .row.selected {
+  border-color: white;
+  background-color: #2c4066;
+}
+
+#vehicleSwitcher .vehicle-list .vehicleName {
+  font-size: 20px;
+}
+
+#vehicleSwitcher .vehicle-list .vehicleMileage {
+  color: #bbb;
+  font-size: 16px;
+}
+
+#addVehicleBtn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #1e2c47;
+  color: white;
+  border: 1px solid wheat;
+}
+
+/* Service history list */
+.service-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 0.5rem;
+}
+
+.service-history-list .row {
+  background-color: rgba(255, 255, 255, 0.08);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.service-history-list .row .mileage {
+  font-size: 18px;
+}
+
+.service-history-list .row .date {
+  background-color: rgba(255, 255, 255, 0.137);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.service-history-list .row .right-side {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.has-notes,
+.delete-icon {
+  color: white;
+  width: 22px;
+}

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+
+  <title>CarTrack</title>
+  <meta name="description" content="Seguimiento de mantenimiento del auto" />
+
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <link rel="manifest" href="static/manifest.json" />
+  <link rel="icon" type="image/png" sizes="32x32" href="static/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="static/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="static/icons/apple-touch-icon.png" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/classes.css" />
+  <link rel="stylesheet" href="css/logger.css" />
+  <link rel="stylesheet" href="css/cache-control.css" />
+  <link rel="stylesheet" href="css/btn.css" />
+  <link rel="stylesheet" href="css/input.css" />
+  <link rel="stylesheet" href="css/service.css" />
+
+  <script src="js/app.js" type="module" defer></script>
+</head>
+
+<body>
+  <!-- Application -->
+  <div id="app">
+    <header id="mainHeader">
+      <div class="page-title"></div>
+      <div id="vehicleSwitcherBtn" class="vehicle-switcher-btn"></div>
+      <div id="goBack2" class="go-back"></div>
+    </header>
+
+    <div class="views">
+      <!-- Maintenance List -->
+      <div id="maintenanceListView" class="page">
+        <div class="vehicle-summary">
+          <div class="mileage"><span class="value">0</span> km</div>
+          <div id="logMileageBtn" role="button" class="base-button">Actualizar km</div>
+        </div>
+
+        <div class="search-container">
+          <label for="searchItem"></label>
+          <input type="text" name="search" id="searchItem" placeholder="buscar" />
+        </div>
+
+        <div class="list">
+          <!--  -->
+        </div>
+        <div class="btns">
+          <div id="newItemBtn" role="button" class="base-button">&plus;</div>
+        </div>
+      </div>
+
+      <!-- Single Maintenance Item -->
+      <div id="singleItemView" class="page">
+        <div class="heading">
+          <h3 class="name"><!-- --></h3>
+          <div class="right-side">
+            <div class="delete-btn"> <!--  --> </div>
+            <div class="edit-btn"><!--  --></div>
+          </div>
+        </div>
+
+        <div class="status-summary">
+          <div class="status-badge"><!-- --></div>
+          <div class="due-detail"><!-- --></div>
+          <div class="interval-detail"><!-- --></div>
+        </div>
+
+        <div class="btns">
+          <div id="markServicedBtn" role="button" class="base-button">Marcar como realizado</div>
+        </div>
+
+        <div class="service-history-container">
+          <h4>Historial</h4>
+          <div class="service-history-list"><!--  --></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="main-modal" class="modal">
+      <div class="backdrop">
+        <div class="close-modal">&times;</div>
+      </div>
+
+      <div class="content">
+        <!-- Vehicle Form (Create) -->
+        <form id="vehicleForm" class="base-form">
+          <h3 class="form-title">Nuevo Vehículo</h3>
+          <div class="form-content">
+            <div class="form-control">
+              <label for="vehicleName">Nombre</label>
+              <input type="text" name="vehicleName" placeholder="ej. Honda Civic" />
+            </div>
+            <div class="form-control">
+              <label for="vehicleMileage">Kilometraje actual</label>
+              <input type="number" step="1" min="0" name="vehicleMileage" />
+            </div>
+            <div class="submit"><!--  --></div>
+          </div>
+        </form>
+
+        <!-- Vehicle Switcher -->
+        <div id="vehicleSwitcher" class="base-form">
+          <h3 class="form-title">Cambiar de vehículo</h3>
+          <div class="form-content">
+            <div class="vehicle-list"><!--  --></div>
+            <div class="submit">
+              <div id="addVehicleBtn" role="button" class="base-button">&plus; Agregar vehículo</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mileage Form -->
+        <form id="mileageForm" class="base-form">
+          <h3 class="form-title">Actualizar Kilometraje</h3>
+          <div class="form-content">
+            <div class="form-control">
+              <label for="mileage">Kilometraje</label>
+              <input type="number" step="1" min="0" name="mileage" />
+            </div>
+            <div class="submit"><!--  --></div>
+          </div>
+        </form>
+
+        <!-- Maintenance Item Form (Create/Edit) -->
+        <form id="itemForm" class="base-form">
+          <h3 class="form-title">Nuevo Mantenimiento</h3>
+          <div class="form-content">
+            <div class="form-control">
+              <label for="itemName">Nombre</label>
+              <input type="text" name="itemName" placeholder="ej. Cambio de aceite" />
+            </div>
+            <div class="numeric-inputs">
+              <div class="form-control">
+                <label for="intervalKm">Cada (km)</label>
+                <input type="number" step="1" min="0" name="intervalKm" />
+              </div>
+              <div class="form-control">
+                <label for="intervalDays">Cada (días)</label>
+                <input type="number" step="1" min="0" name="intervalDays" />
+              </div>
+            </div>
+            <div class="numeric-inputs last-service-inputs">
+              <div class="form-control">
+                <label for="lastServiceMileage">Último realizado (km)</label>
+                <input type="number" step="1" min="0" name="lastServiceMileage" />
+              </div>
+              <div class="form-control">
+                <label for="lastServiceDate">Último realizado (fecha)</label>
+                <input type="date" name="lastServiceDate" />
+              </div>
+            </div>
+            <div class="form-control">
+              <label for="itemNotes">Notas</label>
+              <textarea rows="3" name="itemNotes"></textarea>
+            </div>
+            <div class="submit"><!--  --></div>
+          </div>
+        </form>
+
+        <!-- Mark-as-serviced Form -->
+        <form id="serviceForm" class="base-form">
+          <h3 class="form-title">Marcar como realizado</h3>
+          <div class="form-content">
+            <div class="numeric-inputs">
+              <div class="form-control">
+                <label for="serviceMileage">Kilometraje</label>
+                <input type="number" step="1" min="0" name="serviceMileage" />
+              </div>
+              <div class="form-control">
+                <label for="serviceDate">Fecha</label>
+                <input type="date" name="serviceDate" />
+              </div>
+            </div>
+            <div class="form-control">
+              <label for="serviceNotes">Notas</label>
+              <textarea rows="3" name="serviceNotes"></textarea>
+            </div>
+            <div class="submit"><!--  --></div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="mainFooter">
+      <div id="cacheMajorVersion"></div>
+      <div id="indexedDbVersion"></div>
+    </div>
+  </div>
+
+  <!-- Cache update banner -->
+  <div id="updateBanner" class="folded">
+    <p>Hay una nueva versión disponible</p>
+    <button id="refreshPageBtn">Refrescá la página para actualizar</button>
+  </div>
+
+  <!-- Logger -->
+  <div id="logger" class="display-none">
+    <div id="closeLogsBtn">
+      <h4>Cerrar logs</h4>
+    </div>
+    <div id="logs"></div>
+  </div>
+</body>
+
+</html>
