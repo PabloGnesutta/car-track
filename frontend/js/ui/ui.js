@@ -10,6 +10,7 @@ import {
   closeSingleItem, openItemForm, openSingleItem, submitItemBtn, submitItemForm, tryDeleteItem,
 } from "./maintenance-ui.js";
 import { openServiceForm, submitServiceForm, tryDeleteServiceRecord } from "./service-ui.js";
+import { openMileageHistory } from "./mileage-ui.js";
 
 
 const mainHeader = $('mainHeader');
@@ -35,6 +36,7 @@ function initUi() {
   });
 
   $('logMileageBtn').addEventListener('click', () => { openMileageForm(); });
+  $('mileageHistoryBtn').addEventListener('click', () => { openMileageHistory(); });
   $('newItemBtn').addEventListener('click', () => { openItemForm(false); });
 
   $button({
@@ -138,6 +140,7 @@ function modalBackdropHandler() {
       setStateField('editingItem', false);
       setStateField('showVehicleForm', false);
       setStateField('showMileageForm', false);
+      setStateField('showMileageHistory', false);
       setStateField('showItemForm', false);
       setStateField('showServiceForm', false);
     }

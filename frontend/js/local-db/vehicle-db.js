@@ -1,6 +1,7 @@
 import { dbStore } from "../common/state.js";
 import { clearArray } from "../lib/utils.js";
 import { deleteOne, getAll, putOne } from "../lib/indexedDb.js";
+import { addMileageHistoryRecord } from "./mileage-db.js";
 
 
 /**
@@ -44,6 +45,7 @@ async function createVehicle(name, initialMileage, date = new Date()) {
     updatedAt: date,
   };
   vehicle._key = await putOne('vehicles', vehicle);
+  await addMileageHistoryRecord(vehicle._key, initialMileage, initialMileage, date);
 
   dbStore.vehicles.push(vehicle);
   setLastUsedVehicleKey(vehicle._key);
@@ -51,18 +53,23 @@ async function createVehicle(name, initialMileage, date = new Date()) {
 }
 
 /**
- * Records a new odometer reading for the vehicle. Mutates the given Vehicle object.
+ * Records a new odometer reading for the vehicle: writes a mileage history
+ * entry (with the distance traveled since the previous reading) and updates
+ * the vehicle's current mileage. Mutates the given Vehicle object.
  * @param {Vehicle} vehicle
  * @param {number} mileage
  * @param {Date} [date]
+ * @param {string} [notes]
  * @returns {ServiceReturn<Vehicle>}
  */
-async function logMileage(vehicle, mileage, date = new Date()) {
+async function logMileage(vehicle, mileage, date = new Date(), notes = '') {
   if (!vehicle._key) { return { errorMsg: 'Vehículo sin llave' }; }
   if (!Number.isFinite(mileage)) { return { errorMsg: 'Ingresar un kilometraje válido' }; }
   if (mileage < vehicle.currentMileage) {
     return { errorMsg: `El kilometraje no puede ser menor al actual (${vehicle.currentMileage})` };
   }
+
+  await addMileageHistoryRecord(vehicle._key, mileage, vehicle.currentMileage, date, notes);
 
   vehicle.currentMileage = mileage;
   vehicle.currentMileageDate = date;

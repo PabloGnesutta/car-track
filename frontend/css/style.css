@@ -100,6 +100,12 @@ svg {
   background-color: #000e1c;
 }
 
+#maintenanceListView .vehicle-summary .vehicle-summary-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 #maintenanceListView .vehicle-summary .mileage {
   font-size: 24px;
 }
@@ -385,6 +391,7 @@ svg {
 /* Modal/Forms state */
 #app[data-show-vehicle-form='true'] .modal,
 #app[data-show-mileage-form='true'] .modal,
+#app[data-show-mileage-history='true'] .modal,
 #app[data-show-item-form='true'] .modal,
 #app[data-show-service-form='true'] .modal {
   display: flex;
@@ -392,6 +399,7 @@ svg {
 
 #app[data-show-vehicle-form='false'] #vehicleForm,
 #app[data-show-mileage-form='false'] #mileageForm,
+#app[data-show-mileage-history='false'] #mileageHistoryModal,
 #app[data-show-item-form='false'] #itemForm,
 #app[data-show-service-form='false'] #serviceForm {
   display: none;

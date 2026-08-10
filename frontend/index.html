@@ -44,7 +44,10 @@
 
         <div class="vehicle-summary">
           <div class="mileage"><span class="value">0</span> km</div>
-          <div id="logMileageBtn" role="button" class="base-button">Actualizar km</div>
+          <div class="vehicle-summary-btns">
+            <div id="mileageHistoryBtn" role="button" class="base-button">Historial</div>
+            <div id="logMileageBtn" role="button" class="base-button">Actualizar km</div>
+          </div>
         </div>
 
         <div class="search-container">
@@ -122,9 +125,21 @@
               <label for="mileage">Kilometraje</label>
               <input type="number" step="1" min="0" name="mileage" />
             </div>
+            <div class="form-control">
+              <label for="mileageNotes">Notas (opcional)</label>
+              <textarea rows="3" name="mileageNotes"></textarea>
+            </div>
             <div class="submit"><!--  --></div>
           </div>
         </form>
+
+        <!-- Mileage History -->
+        <div id="mileageHistoryModal" class="base-form">
+          <h3 class="form-title">Historial de Kilometraje</h3>
+          <div class="form-content">
+            <div class="mileage-history-list"><!--  --></div>
+          </div>
+        </div>
 
         <!-- Maintenance Item Form (Create/Edit) -->
         <form id="itemForm" class="base-form">

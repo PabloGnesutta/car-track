@@ -2,6 +2,7 @@ import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom
 import { _error } from "../lib/logger.js";
 import { pen_solid } from "../svg/svgFn.js";
 import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
+import { deleteVehicleMileageHistory } from "../local-db/mileage-db.js";
 import { countItemsByStatus } from "../local-db/maintenance-db.js";
 import { deleteAllItemsForVehicle, fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenance-ui.js";
 import { dataState, dbStore, setStateField } from "../common/state.js";
@@ -23,6 +24,7 @@ const chipsContainer = $queryOne('#maintenanceListView .vehicle-chips');
 
 const mileageForm = $form('mileageForm');
 const mileageInput = $queryOneInput('#mileageForm input[name="mileage"]');
+const mileageNotesInput = $queryOneInput('#mileageForm textarea[name="mileageNotes"]');
 
 const mileageValue = $queryOne('#maintenanceListView .vehicle-summary .mileage .value');
 
@@ -117,8 +119,10 @@ async function deleteVehicleFromForm() {
   setStateField('showVehicleForm', false);
 
   await deleteAllItemsForVehicle(vehicleKey);
+  await deleteVehicleMileageHistory(vehicleKey);
   await deleteVehicle(vehicleKey);
 
+  delete dbStore.mileageHistory[vehicleKey.toString()];
   const idx = dbStore.vehicles.findIndex(v => v._key === vehicleKey);
   if (idx !== -1) { dbStore.vehicles.splice(idx, 1); }
 
@@ -236,6 +240,7 @@ function editVehicle(vehicleKey) {
 function openMileageForm() {
   if (!dataState.currentVehicle) { return; }
   mileageInput.value = dataState.currentVehicle.currentMileage.toString();
+  mileageNotesInput.value = '';
   setStateField('showMileageForm', true);
   mileageInput.focus();
   mileageInput.select();
@@ -251,8 +256,9 @@ async function submitMileageForm(e) {
 
   const formData = new FormData(mileageForm);
   const mileage = Number(formData.get('mileage'));
+  const notes = formData.get('mileageNotes')?.toString() || '';
 
-  const result = await logMileage(vehicle, mileage, new Date());
+  const result = await logMileage(vehicle, mileage, new Date(), notes);
   if (!result.data) {
     return _error(result.errorMsg);
   }

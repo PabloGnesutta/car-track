@@ -39,3 +39,44 @@
   color: white;
   width: 22px;
 }
+
+/* Mileage history list */
+.mileage-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 0.5rem;
+}
+
+.mileage-history-list .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.08);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.mileage-history-list .row .mileage {
+  font-size: 18px;
+}
+
+.mileage-history-list .row .distance {
+  background-color: rgba(255, 255, 255, 0.137);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.mileage-history-list .row .date {
+  opacity: 0.7;
+  font-size: 14px;
+}
+
+.mileage-history-list .row .right-side {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
