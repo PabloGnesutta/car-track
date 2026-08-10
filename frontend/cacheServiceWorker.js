@@ -8,10 +8,10 @@
 /**
  * false for hot reloading, could use environment variable
  */
-const INTERCEPT_FETCH_REQUESTS = false;
+const INTERCEPT_FETCH_REQUESTS = true;
 
 
-const MAJOR_VERSION = 'v0.0.1';
+const MAJOR_VERSION = 'v0.0.2';
 const JS_CACHE = 'js_' + MAJOR_VERSION + '--0.0.1';
 const CSS_CACHE = 'css_' + MAJOR_VERSION + '--0.0.1';
 const MISC_CACHE = 'misc_' + MAJOR_VERSION + '--0.0.1';
