@@ -29,7 +29,7 @@
   bottom: 0;
   background: transparent;
   z-index: 9;
-  color: white;
+  color: var(--text-primary);
 }
 
 .base-button .overlay:hover {
@@ -37,11 +37,11 @@
 }
 
 .base-button .overlay:active {
-  background-color: rgba(255, 255, 255, 0.4);
+  background-color: var(--overlay-active);
 }
 
 .go-back {
-  color: white;
+  color: var(--text-primary);
 }
 .go-back .btn {
   padding: 0.75rem;

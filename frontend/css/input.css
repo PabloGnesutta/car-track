@@ -9,10 +9,10 @@ input {
 }
 
 .base-form {
-  --title-bg: #1e2c47;
-  --title-color: #ffffff;
-  --content-bg: #ed143d;
-  --control-bg: rgba(0, 0, 0, 0.5);
+  --title-bg: var(--form-item-title);
+  --title-color: var(--text-primary);
+  --content-bg: var(--form-item-content);
+  --control-bg: var(--press-bg);
 }
 
 .base-form {}
@@ -50,7 +50,7 @@ input {
 }
 
 .form-control label {
-  color: white;
+  color: var(--text-primary);
   display: block;
   font-size: 20px;
   padding: 4px 0;
@@ -66,36 +66,39 @@ input {
 }
 
 textarea {
-  background-color: rgb(50, 50, 50);
-  color: white;
+  background-color: var(--surface-2);
+  color: var(--text-primary);
 }
 
 /* custom */
 #vehicleForm {
-  --title-bg: #4e004e;
-  --content-bg: #711942;
+  --title-bg: var(--form-vehicle-title);
+  --content-bg: var(--form-vehicle-content);
 }
 
 #vehicleForm .submit .btn,
 #mileageForm .submit .btn,
 #itemForm .submit .btn,
 #serviceForm .submit .btn {
-  background-color: #d0276e;
+  background-color: var(--accent-strong);
   padding: 2rem;
   font-size: 22px;
-  border: 1px solid wheat;
+  border: 1px solid var(--accent);
 }
 
 #itemForm {
-  --content-bg: #1e2c47;
+  --title-bg: var(--form-item-title);
+  --content-bg: var(--form-item-content);
 }
 
 #serviceForm {
-  --content-bg: #001b4d;
+  --title-bg: var(--form-service-title);
+  --content-bg: var(--form-service-content);
 }
 
 #mileageForm {
-  --content-bg: #4c0211;
+  --title-bg: var(--form-mileage-title);
+  --content-bg: var(--form-mileage-content);
 }
 
 .search-container {
@@ -103,12 +106,12 @@ textarea {
 }
 
 .search-container input {
-  background-color: black;
-  color: #e7e7e7;
-  border-bottom: 1px solid #717171;
+  background-color: var(--surface-0);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--text-faint);
 }
 
 .search-container input::placeholder {
-  color: rgb(100, 100, 100);
+  color: var(--text-muted);
   padding: 0 2px;
 }

@@ -5,21 +5,65 @@
 }
 
 :root {
-  --app-bg: #111;
-  --header-bg: black;
   --header-heigt: 64px;
   --footer-heigt: 48px;
+
+  /* Neutral surfaces - blue-slate dark scale, darkest to lightest */
+  --surface-0: #0a0e14;
+  --surface-1: #0c1220;
+  --surface-2: #13233b;
+  --surface-3: #1c3355;
+  --surface-4: #2a4570;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #a8b3c7;
+  --text-muted: #6e7891;
+  --text-faint: #4a5268;
+
+  /* Brand accent - primary actions, focus, links */
+  --accent: #3d8bfd;
+  --accent-strong: #2f6fd6;
+  --accent-soft: #1c3d66;
+
+  /* Status semantics - shared by badges, borders, vehicle badges */
   --status-ok: #1c8a3f;
-  --status-due-soon: #b8860b;
-  --status-overdue: #b0132f;
   --status-ok-text: #6fcf8f;
+  --status-due-soon: #b8860b;
   --status-due-soon-text: #e0b34d;
+  --status-overdue: #b0132f;
   --status-overdue-text: #ff8a8a;
+
+  /* Form accents - harmonized jewel tones (same saturation/lightness family) */
+  --form-vehicle-title: #3a2159;
+  --form-vehicle-content: #241540;
+  --form-item-title: var(--surface-3);
+  --form-item-content: var(--surface-2);
+  --form-service-title: #164a52;
+  --form-service-content: #0d3339;
+  --form-mileage-title: #5c2340;
+  --form-mileage-content: #3c162b;
+
+  /* Overlays & scrims */
+  --overlay-faint: rgba(255, 255, 255, 0.05);
+  --overlay-soft: rgba(255, 255, 255, 0.08);
+  --overlay-medium: rgba(255, 255, 255, 0.15);
+  --overlay-active: rgba(255, 255, 255, 0.4);
+  --overlay-strong: rgba(255, 255, 255, 0.5);
+  --press-bg: rgba(0, 0, 0, 0.5);
+  --scrim: rgba(0, 0, 0, 0.7);
+  --shadow: rgba(0, 0, 0, 0.4);
+
+  /* Logger entry types */
+  --log-info: #1c6b1c;
+  --log-debug: var(--accent-soft);
+  --log-warn: #7c4f00;
+  --log-error: #7a0d0d;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  background-color: #222;
+  background-color: var(--surface-0);
 }
 
 div {
@@ -32,26 +76,28 @@ svg {
 }
 
 #app {
-  background-color: var(--app-bg);
-  color: white;
+  background-color: var(--surface-0);
+  color: var(--text-primary);
 }
 
 #cacheMajorVersion,
 #indexedDbVersion {
-  background-color: white;
-  color: black;
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--surface-4);
   padding: 4px;
   border-radius: 4px;
   font-size: 16px;
 }
 
 #indexedDbVersion {
-  background-color: cyan;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 #mainHeader {
   min-height: var(--header-heigt);
-  background-color: var(--header-bg);
+  background-color: var(--surface-1);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -62,11 +108,11 @@ svg {
 .page-title {
   font-size: 34px;
   padding-left: 1rem;
-  color: white;
+  color: var(--text-primary);
 }
 
 .views {
-  background-color: #001a22;
+  background-color: var(--surface-0);
 }
 
 .views .page {
@@ -74,7 +120,7 @@ svg {
 }
 
 #mainFooter {
-  background-color: var(--header-bg);
+  background-color: var(--surface-1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,11 +130,11 @@ svg {
 
 #mainFooter .btn {
   padding: 3dvw;
-  color: white;
+  color: var(--text-primary);
 }
 
 #maintenanceListView {
-  --list-row-bg: #1e2c47;
+  --list-row-bg: var(--surface-2);
   padding-bottom: 4.5rem;
 }
 
@@ -97,7 +143,7 @@ svg {
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background-color: #000e1c;
+  background-color: var(--surface-1);
 }
 
 #maintenanceListView .vehicle-summary .vehicle-summary-btns {
@@ -131,7 +177,7 @@ svg {
 
 #maintenanceListView .list .row .itemName {
   font-size: 22px;
-  background-color: #ffffff29;
+  background-color: var(--overlay-medium);
   padding: .5rem 1rem;
   border-radius: 6px;
   align-self: flex-start;
@@ -139,7 +185,7 @@ svg {
 
 #maintenanceListView .list .row .itemMeta {
   font-size: 13px;
-  color: #999;
+  color: var(--text-muted);
   padding: 0 0.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -149,7 +195,7 @@ svg {
 }
 
 #maintenanceListView .list .empty-state {
-  color: #777;
+  color: var(--text-muted);
   text-align: center;
   padding: 3rem 1.5rem;
   font-size: 16px;
@@ -169,22 +215,22 @@ svg {
   width: 60px;
   height: 60px;
   z-index: 1;
-  border: 1px solid white;
+  border: 1px solid var(--text-primary);
   border-radius: 50%;
   background-color: var(--list-row-bg);
-  color: white;
+  color: var(--text-primary);
   font-size: 40px;
 }
 
 #newItemBtn:active {
-  background-color: #2c4066;
+  background-color: var(--surface-4);
 }
 
 .status-badge {
   padding: 2px 8px;
   border-radius: 999px;
   font-size: 14px;
-  color: white;
+  color: var(--text-primary);
   display: inline-block;
 }
 
@@ -241,7 +287,7 @@ svg {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #142845;
+  background-color: var(--surface-3);
 }
 
 #singleItemView .name {
@@ -274,8 +320,8 @@ svg {
 #singleItemView .status-summary .interval-detail,
 #singleItemView .status-summary .notes-detail {
   font-size: 14px;
-  color: #bbb;
-  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  background-color: var(--overlay-faint);
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   margin-top: 4px;
@@ -294,9 +340,9 @@ svg {
 
 #markServicedBtn .btn {
   padding: 1rem 1.5rem;
-  background-color: #1e2c47;
-  color: white;
-  border: 1px solid wheat;
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
 }
 
 #markServicedBtn .icon {
@@ -305,7 +351,7 @@ svg {
 }
 
 #singleItemView .service-history-container {
-  background-color: #06101c;
+  background-color: var(--surface-1);
   padding: 0.5rem;
   padding-bottom: 0.125rem;
   margin-top: 0.75rem;
@@ -328,15 +374,15 @@ svg {
   justify-content: space-between;
   align-items: center;
   gap: 2dvw;
-  color: white;
+  color: var(--text-primary);
   padding: 0.5rem;
   border-radius: 6px;
   border: 1px solid transparent;
 }
 
 .list .row:active {
-  background-color: rgba(0, 0, 0, 0.5);
-  border-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--press-bg);
+  border-color: var(--overlay-strong);
 }
 
 .list .row .right-side {
@@ -366,7 +412,7 @@ svg {
   position: absolute;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--scrim);
 }
 
 .modal .close-modal {

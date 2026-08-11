@@ -13,7 +13,7 @@
   gap: 8px;
   padding: 0.5rem;
   border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--overlay-soft);
   font-family: 'Courier New', Courier, monospace;
 }
 
@@ -22,7 +22,7 @@
 }
 
 .service-history-list .row .date {
-  background-color: rgba(255, 255, 255, 0.137);
+  background-color: var(--overlay-medium);
   padding: 0 4px;
   border-radius: 4px;
 }
@@ -36,7 +36,7 @@
 
 .has-notes,
 .delete-icon {
-  color: white;
+  color: var(--text-primary);
   width: 22px;
 }
 
@@ -55,7 +55,7 @@
   gap: 8px;
   padding: 0.5rem;
   border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--overlay-soft);
   font-family: 'Courier New', Courier, monospace;
 }
 
@@ -64,7 +64,7 @@
 }
 
 .mileage-history-list .row .distance {
-  background-color: rgba(255, 255, 255, 0.137);
+  background-color: var(--overlay-medium);
   padding: 0 4px;
   border-radius: 4px;
 }

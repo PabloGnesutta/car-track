@@ -1,5 +1,5 @@
 #logger {
-  background-color: #111;
+  background-color: var(--surface-0);
   position: fixed;
   top: 0;
   left: 0;
@@ -15,13 +15,13 @@
   padding: 1rem;
   font-size: 20px;
   text-align: right;
-  background-color: #222;
-  color: #aaa;
+  background-color: var(--surface-2);
+  color: var(--text-secondary);
   position: fixed;
   top: 3px;
   right: 3px;
   user-select: none;
-  border: 1px solid #aaa;
+  border: 1px solid var(--text-secondary);
   border-radius: 8px;
 }
 
@@ -33,28 +33,28 @@
   position: relative;
   font-family: 'Courier New', Courier, monospace;
   white-space: pre;
-  background-color: #333;
+  background-color: var(--surface-3);
   font-size: 20px;
   padding: 4px;
   margin-bottom: 4px;
-  color: white;
+  color: var(--text-primary);
   min-height: 32px;
 }
 
 .log-entry.type-info {
-  background-color: #005600;
+  background-color: var(--log-info);
 }
 
 .log-entry.type-debug {
-  background-color: #000f4e;
+  background-color: var(--log-debug);
 }
 
 .log-entry.type-warn {
-  background-color: #7c4f00;
+  background-color: var(--log-warn);
 }
 
 .log-entry.type-error {
-  background-color: #890000;
+  background-color: var(--log-error);
 }
 
 .log-entry.folded {
@@ -68,7 +68,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: var(--overlay-strong);
   font-size: 20px;
   padding-right: 4px;
   padding-bottom: 4px;
