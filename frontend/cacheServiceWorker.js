@@ -8,7 +8,7 @@
 /**
  * false for hot reloading, could use environment variable
  */
-const INTERCEPT_FETCH_REQUESTS = true;
+const INTERCEPT_FETCH_REQUESTS = false;
 
 
 const MAJOR_VERSION = 'v0.0.2';
