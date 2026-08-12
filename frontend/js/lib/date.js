@@ -72,4 +72,13 @@ function fromYYYYMMDD(str) {
 }
 
 
-export { timeAgo, toYYYYMMDD, fromYYYYMMDD };
+/**
+ * @param {Date} date
+ * @returns {string}
+ */
+function formatDateEs(date) {
+    return date.toLocaleDateString('es');
+}
+
+
+export { timeAgo, toYYYYMMDD, fromYYYYMMDD, formatDateEs };

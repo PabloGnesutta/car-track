@@ -8,7 +8,7 @@ import {
   fetchMaintenanceItems, updateMaintenanceItem,
 } from "../local-db/maintenance-db.js";
 import { deleteItemHistory, restoreServiceRecords } from "../local-db/service-db.js";
-import { computeStatus, formatDueDetail } from "../lib/maintenanceStatus.js";
+import { computeStatus, formatDueDetail, formatRemindersBanner, STATUS_LABELS } from "../lib/maintenanceStatus.js";
 import { showUndoToast } from "../lib/toast.js";
 import { pageTitle } from "./ui.js";
 import { populateServiceHistory } from "./service-ui.js";
@@ -20,9 +20,9 @@ import { renderVehicleChips } from "./vehicle-ui.js";
  * @typedef {import("../local-db/maintenance-db.js").MaintenanceItem} MaintenanceItem
  */
 
-const STATUS_LABELS = { ok: 'Al día', 'due-soon': 'Por vencer', overdue: 'Vencido' };
-
 const itemList = $queryOne('#maintenanceListView .list');
+const remindersBanner = $queryOne('#maintenanceListView .reminders-banner');
+const remindersText = $getInner(remindersBanner, '.reminders-text');
 
 const singleItemView = $('singleItemView');
 const itemName = $getInner(singleItemView, '.name');
@@ -75,10 +75,30 @@ async function fetchAndRenderMaintenanceItems(vehicle) {
       class: 'empty-state',
       text: 'No hay ítems de mantenimiento todavía. Tocá + para agregar uno.',
     }));
+    updateRemindersBanner(0, 0);
   } else {
-    items.forEach(item => appendItemRow(item, vehicle));
+    const statuses = items.map(item => appendItemRow(item, vehicle));
+    updateRemindersBanner(
+      statuses.filter(s => s === 'overdue').length,
+      statuses.filter(s => s === 'due-soon').length,
+    );
   }
   await renderVehicleChips();
+}
+
+/**
+ * Shows/hides and fills the "due soon" summary banner at the top of the list.
+ * @param {number} overdueCount
+ * @param {number} dueSoonCount
+ */
+function updateRemindersBanner(overdueCount, dueSoonCount) {
+  if (!overdueCount && !dueSoonCount) {
+    remindersBanner.classList.add('display-none');
+    return;
+  }
+  remindersBanner.dataset.status = overdueCount > 0 ? 'overdue' : 'due-soon';
+  remindersText.innerText = formatRemindersBanner(overdueCount, dueSoonCount);
+  remindersBanner.classList.remove('display-none');
 }
 
 /** Open the maintenance list view */
@@ -90,6 +110,7 @@ function openMaintenanceList() {
 /**
  * @param {MaintenanceItem} item
  * @param {Vehicle} vehicle
+ * @returns {import("../lib/maintenanceStatus.js").MaintenanceStatus}
  */
 function appendItemRow(item, vehicle) {
   const key = (item._key || '').toString();
@@ -120,6 +141,7 @@ function appendItemRow(item, vehicle) {
   });
 
   itemList.append(row);
+  return status;
 }
 
 /**

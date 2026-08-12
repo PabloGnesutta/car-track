@@ -366,4 +366,30 @@ async function deleteMany(storeName, indexName, indexValue) {
 }
 
 
-export { initializeIndexedDb, putOne, getOne, getAll, getOneWithIndex, getAllWithIndex, deleteOne, deleteMany };
+/**
+ * Deletes every record in the given store.
+ * @param {ObjectStores} storeName
+ * @returns {Promise<boolean>}
+ */
+async function clearStore(storeName) {
+  return new Promise((res, rej) => {
+    if (!db) return rej('No database found');
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
+
+    const clearRequest = store.clear();
+    clearRequest.onsuccess = () => {
+      _info(' __ ClearStore: ' + storeName);
+      return res(true);
+    };
+    clearRequest.onerror = e => {
+      _error(' __ Error clearing store');
+      // @ts-ignore
+      _error(e.target.error.message);
+      return rej(e);
+    };
+  });
+}
+
+
+export { initializeIndexedDb, putOne, getOne, getAll, getOneWithIndex, getAllWithIndex, deleteOne, deleteMany, clearStore };

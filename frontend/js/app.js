@@ -8,6 +8,7 @@ import { $ } from "./lib/dom.js";
 import { fetchVehicles, resolveCurrentVehicle } from "./local-db/vehicle-db.js";
 import { activateVehicle, openVehicleForm } from "./ui/vehicle-ui.js";
 import { seedDb } from "./local-db/seed.js";
+import { initBackupUi } from "./ui/backup-ui.js";
 
 
 _info(' (!) App started');
@@ -37,3 +38,4 @@ eventBus.on('IndexedDbInited', async ({ version }) => {
 initAppState();
 initUi();
 dbugBtns();
+initBackupUi($('mainFooter'));

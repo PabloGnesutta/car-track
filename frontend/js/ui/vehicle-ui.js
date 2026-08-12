@@ -1,6 +1,7 @@
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
 import { pen_solid } from "../svg/svgFn.js";
+import { setAppBadge } from "../lib/badge.js";
 import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
 import { deleteVehicleMileageHistory } from "../local-db/mileage-db.js";
 import { countItemsByStatus } from "../local-db/maintenance-db.js";
@@ -169,10 +170,12 @@ async function renderVehicleChips() {
   chipsContainer.innerHTML = '';
   const currentKey = dataState.currentVehicle?._key;
   const today = new Date();
+  let totalUrgent = 0;
 
   for (const vehicle of dbStore.vehicles) {
     const key = (vehicle._key || '').toString();
     const { overdue, dueSoon } = await countItemsByStatus(vehicle._key || '', vehicle.currentMileage, today);
+    totalUrgent += overdue + dueSoon;
 
     /** @type {HTMLElement[]} */
     const badges = [];
@@ -207,6 +210,8 @@ async function renderVehicleChips() {
     text: '+',
     dataset: [['clickAction', 'openAddVehicle']],
   }));
+
+  setAppBadge(totalUrgent);
 }
 
 /**

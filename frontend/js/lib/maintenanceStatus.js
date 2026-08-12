@@ -7,6 +7,9 @@ const DUE_SOON_KM = 500;
 const DUE_SOON_DAYS = 14;
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
+/** @type {Record<MaintenanceStatus, string>} */
+const STATUS_LABELS = { ok: 'Al día', 'due-soon': 'Por vencer', overdue: 'Vencido' };
+
 /**
  * Computes whether a maintenance item is due, based on the vehicle's current
  * mileage/date vs. the item's interval since it was last serviced.
@@ -87,4 +90,18 @@ function formatKm(n) {
   return Math.round(n).toLocaleString('es');
 }
 
-export { computeStatus, formatDueDetail };
+/**
+ * Spanish summary for the due-soon reminders banner, e.g.
+ * "2 vencidos · 1 por vencer".
+ * @param {number} overdueCount
+ * @param {number} dueSoonCount
+ * @returns {string}
+ */
+function formatRemindersBanner(overdueCount, dueSoonCount) {
+  const parts = [];
+  if (overdueCount > 0) { parts.push(`${overdueCount} vencido${overdueCount > 1 ? 's' : ''}`); }
+  if (dueSoonCount > 0) { parts.push(`${dueSoonCount} por vencer`); }
+  return parts.join(' · ');
+}
+
+export { computeStatus, formatDueDetail, formatRemindersBanner, STATUS_LABELS };

@@ -11,6 +11,7 @@ import {
 } from "./maintenance-ui.js";
 import { openServiceForm, submitServiceForm, tryDeleteServiceRecord } from "./service-ui.js";
 import { openMileageHistory } from "./mileage-ui.js";
+import { shareVehicleReport } from "./report-ui.js";
 
 
 const mainHeader = $('mainHeader');
@@ -37,6 +38,7 @@ function initUi() {
 
   $('logMileageBtn').addEventListener('click', () => { openMileageForm(); });
   $('mileageHistoryBtn').addEventListener('click', () => { openMileageHistory(); });
+  $('shareReportBtn').addEventListener('click', () => { shareVehicleReport(); });
   $('newItemBtn').addEventListener('click', () => { openItemForm(false); });
 
   $button({
