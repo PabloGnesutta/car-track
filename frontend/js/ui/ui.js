@@ -152,22 +152,22 @@ function modalBackdropHandler() {
 
 function dbugBtns() {
   const mainFooter = $('mainFooter');
-  $button({
-    label: 'State',
-    appendTo: mainFooter,
-    listener: {
-      fn: e => {
-        _log('dbStore', dbStore);
-        _log('dataState', dataState);
-        openLogs()
-      }
-    }
-  });
-  $button({
-    label: 'Logs',
-    appendTo: mainFooter,
-    listener: { fn: e => openLogs() }
-  });
+  // $button({
+  //   label: 'State',
+  //   appendTo: mainFooter,
+  //   listener: {
+  //     fn: e => {
+  //       _log('dbStore', dbStore);
+  //       _log('dataState', dataState);
+  //       openLogs()
+  //     }
+  //   }
+  // });
+  // $button({
+  //   label: 'Logs',
+  //   appendTo: mainFooter,
+  //   listener: { fn: e => openLogs() }
+  // });
 }
 
 

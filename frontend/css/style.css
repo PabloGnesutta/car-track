@@ -124,12 +124,12 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: 4px;
   padding: 1dvw;
 }
 
 #mainFooter .btn {
-  padding: 3dvw;
+  padding: 4px;
   color: var(--text-primary);
 }
 

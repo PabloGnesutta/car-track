@@ -16,7 +16,7 @@ function initNotificationsUi(container) {
   if (!notificationsSupported()) { return; }
 
   $button({
-    label: 'Activar notificaciones',
+    label: 'Notificaciones',
     class: 'notifications-toggle-btn',
     appendTo: container,
     listener: { fn: handleClick },
@@ -34,7 +34,7 @@ function refreshLabel() {
   } else if (permission === 'denied') {
     labelEl.innerText = 'Notificaciones bloqueadas';
   } else {
-    labelEl.innerText = 'Activar notificaciones';
+    labelEl.innerText = 'Notificaciones';
   }
 }
 

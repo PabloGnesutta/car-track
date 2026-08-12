@@ -14,7 +14,7 @@ let fileInput;
  */
 function initBackupUi(container) {
   $button({
-    label: 'Exportar datos',
+    label: 'Export',
     appendTo: container,
     listener: { fn: downloadBackup },
   });
@@ -24,7 +24,7 @@ function initBackupUi(container) {
   document.body.append(fileInput);
 
   $button({
-    label: 'Importar datos',
+    label: 'Import',
     appendTo: container,
     listener: { fn: () => fileInput.click() },
   });
