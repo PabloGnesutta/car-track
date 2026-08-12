@@ -1,6 +1,7 @@
 import { $button, $new, $newInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
 import { toYYYYMMDD } from "../lib/date.js";
+import { svg_download, svg_upload } from "../svg/svgFn.js";
 import { exportAllData, restoreAllData } from "../local-db/backup-db.js";
 
 
@@ -14,20 +15,38 @@ let fileInput;
  */
 function initBackupUi(container) {
   $button({
-    label: 'Export',
+    class: 'icon-btn export-btn',
+    svgFn: svg_download,
     appendTo: container,
     listener: { fn: downloadBackup },
   });
+  setButtonLabel(container, '.export-btn', 'Exportar datos');
 
   fileInput = $newInput({ type: 'file', accept: '.json,application/json', class: 'display-none' });
   fileInput.addEventListener('change', handleFileSelected);
   document.body.append(fileInput);
 
   $button({
-    label: 'Import',
+    class: 'icon-btn import-btn',
+    svgFn: svg_upload,
     appendTo: container,
     listener: { fn: () => fileInput.click() },
   });
+  setButtonLabel(container, '.import-btn', 'Importar datos');
+}
+
+/**
+ * $button() has no accessible-name option for icon-only buttons — set it
+ * manually so screen readers announce something more useful than "button".
+ * @param {HTMLElement} container
+ * @param {string} selector
+ * @param {string} label
+ */
+function setButtonLabel(container, selector, label) {
+  const btn = container.querySelector(selector);
+  if (!btn) { return; }
+  btn.setAttribute('aria-label', label);
+  btn.title = label;
 }
 
 async function downloadBackup() {

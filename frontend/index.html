@@ -44,11 +44,13 @@
         <div class="vehicle-chips"><!--  --></div>
 
         <div class="vehicle-summary">
-          <div class="mileage"><span class="value">0</span> km</div>
+          <div id="logMileageBtn" role="button" class="mileage" aria-label="Actualizar kilometraje" title="Actualizar kilometraje">
+            <span class="value">0</span> km
+            <span class="edit-hint"></span>
+          </div>
           <div class="vehicle-summary-btns">
-            <div id="mileageHistoryBtn" role="button" class="base-button">Historial</div>
-            <div id="logMileageBtn" role="button" class="base-button">Actualizar km</div>
-            <div id="shareReportBtn" role="button" class="base-button">Compartir</div>
+            <div id="mileageHistoryBtn" role="button" class="base-button icon-btn" aria-label="Ver historial de kilometraje" title="Historial"></div>
+            <div id="shareReportBtn" role="button" class="base-button icon-btn" aria-label="Compartir informe" title="Compartir"></div>
           </div>
         </div>
 

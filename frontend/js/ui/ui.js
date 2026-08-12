@@ -1,7 +1,7 @@
 import { appState, dataState, dbStore, setStateField } from "../common/state.js";
 import { $, $button, $getInner, $queryOne } from "../lib/dom.js";
 import { _info, _log, _warn, openLogs } from "../lib/logger.js";
-import { arrow_left, pen_solid, svg_check, svg_trash } from "../svg/svgFn.js";
+import { arrow_left, pen_solid, svg_check, svg_clock, svg_share, svg_trash } from "../svg/svgFn.js";
 import {
   deleteVehicleFromForm, editVehicle, openAddVehicle, openMileageForm,
   submitMileageForm, submitVehicleForm, switchVehicle,
@@ -36,8 +36,11 @@ function initUi() {
     }
   });
 
+  $getInner($('logMileageBtn'), '.edit-hint').innerHTML = pen_solid();
   $('logMileageBtn').addEventListener('click', () => { openMileageForm(); });
+  $('mileageHistoryBtn').innerHTML = svg_clock();
   $('mileageHistoryBtn').addEventListener('click', () => { openMileageHistory(); });
+  $('shareReportBtn').innerHTML = svg_share();
   $('shareReportBtn').addEventListener('click', () => { shareVehicleReport(); });
   $('newItemBtn').addEventListener('click', () => { openItemForm(false); });
 

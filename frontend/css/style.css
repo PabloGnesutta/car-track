@@ -133,6 +133,38 @@ svg {
   color: var(--text-primary);
 }
 
+#mainFooter .btn.icon-btn {
+  padding: 0.75rem;
+}
+
+#mainFooter .btn.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+#mainFooter .btn.icon-btn .icon {
+  position: relative;
+}
+
+#mainFooter .btn.icon-btn .dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: transparent;
+  border: 2px solid var(--surface-1);
+}
+
+#mainFooter .notifications-toggle-btn[data-permission="granted"] .dot {
+  background-color: var(--status-ok-text);
+}
+
+#mainFooter .notifications-toggle-btn[data-permission="denied"] .dot {
+  background-color: var(--status-overdue-text);
+}
+
 #maintenanceListView {
   --list-row-bg: var(--surface-2);
   padding-bottom: 4.5rem;
@@ -152,12 +184,44 @@ svg {
   gap: 8px;
 }
 
+#maintenanceListView .vehicle-summary .vehicle-summary-btns .icon-btn {
+  padding: 0.75rem;
+  border-radius: 6px;
+}
+
+#maintenanceListView .vehicle-summary .vehicle-summary-btns .icon-btn:active {
+  background-color: var(--overlay-medium);
+}
+
+#maintenanceListView .vehicle-summary .vehicle-summary-btns .icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 #maintenanceListView .vehicle-summary .mileage {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 24px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#maintenanceListView .vehicle-summary .mileage:active {
+  background-color: var(--overlay-active);
 }
 
 #maintenanceListView .vehicle-summary .mileage .value {
   font-weight: bold;
+}
+
+#maintenanceListView .vehicle-summary .mileage .edit-hint {
+  display: flex;
+  width: 14px;
+  height: 14px;
+  opacity: 0.6;
 }
 
 #maintenanceListView .list {

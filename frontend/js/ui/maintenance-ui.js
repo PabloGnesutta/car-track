@@ -104,7 +104,7 @@ function updateRemindersBanner(overdueCount, dueSoonCount) {
 /** Open the maintenance list view */
 function openMaintenanceList() {
   setCurrentView('MaintenanceList');
-  pageTitle.innerText = 'Mantenimiento';
+  pageTitle.innerText = 'Principal';
 }
 
 /**
@@ -238,7 +238,7 @@ async function openSingleItem(itemKey) {
   if (!item) { return _error('Ítem de mantenimiento no encontrado'); }
 
   setCurrentView('SingleItem');
-  pageTitle.innerText = 'Mantenimiento';
+  pageTitle.innerText = 'Detalle';
   dataState.currentItem = item;
 
   renderItemDetail(item, vehicle);
