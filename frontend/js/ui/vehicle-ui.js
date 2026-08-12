@@ -2,6 +2,7 @@ import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom
 import { _error } from "../lib/logger.js";
 import { pen_solid } from "../svg/svgFn.js";
 import { setAppBadge } from "../lib/badge.js";
+import { notifyDueItemsOnce } from "../lib/notifications.js";
 import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
 import { deleteVehicleMileageHistory } from "../local-db/mileage-db.js";
 import { countItemsByStatus } from "../local-db/maintenance-db.js";
@@ -171,11 +172,14 @@ async function renderVehicleChips() {
   const currentKey = dataState.currentVehicle?._key;
   const today = new Date();
   let totalUrgent = 0;
+  /** @type {{ name: string, overdue: number, dueSoon: number }[]} */
+  const vehicleSummaries = [];
 
   for (const vehicle of dbStore.vehicles) {
     const key = (vehicle._key || '').toString();
     const { overdue, dueSoon } = await countItemsByStatus(vehicle._key || '', vehicle.currentMileage, today);
     totalUrgent += overdue + dueSoon;
+    vehicleSummaries.push({ name: vehicle.name, overdue, dueSoon });
 
     /** @type {HTMLElement[]} */
     const badges = [];
@@ -212,6 +216,7 @@ async function renderVehicleChips() {
   }));
 
   setAppBadge(totalUrgent);
+  notifyDueItemsOnce(vehicleSummaries);
 }
 
 /**

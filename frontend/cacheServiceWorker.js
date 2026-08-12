@@ -79,6 +79,23 @@ self.addEventListener('activate', () => {
   });
 });
 
+/** Focuses an already-open app window, or opens a new one, when a local notification is tapped */
+self.addEventListener('notificationclick', event => {
+  // @ts-ignore
+  event.notification.close();
+  // @ts-ignore
+  event.waitUntil(
+    // @ts-ignore
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientsList => {
+      for (const client of clientsList) {
+        if ('focus' in client) { return client.focus(); }
+      }
+      // @ts-ignore
+      if (self.clients.openWindow) { return self.clients.openWindow('/'); }
+    })
+  );
+});
+
 
 /**
  * @param {string} cacheName
