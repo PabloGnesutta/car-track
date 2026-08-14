@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { TEST_PORT } from './tests/testPort.js';
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -13,13 +14,13 @@ export default defineConfig({
   timeout: 30000,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:4000',
+    baseURL: `http://localhost:${TEST_PORT}`,
     trace: 'retain-on-failure',
   },
   webServer: {
     command: 'npm run serve',
     cwd: '../backend',
-    url: 'http://localhost:4000',
+    url: `http://localhost:${TEST_PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },

@@ -1,3 +1,6 @@
+import { TEST_PORT } from '../testPort.js';
+
+
 /**
  * Playwright's webServer readiness check only waits for a single successful
  * request to "/". The dev server (a minimal hand-rolled static file server,
@@ -8,7 +11,7 @@
 export default async function globalSetup() {
   for (let i = 0; i < 5; i++) {
     try {
-      await fetch('http://localhost:4000/');
+      await fetch(`http://localhost:${TEST_PORT}/`);
     } catch {
       // ignore; the retry loop / test timeouts will surface a real outage
     }
