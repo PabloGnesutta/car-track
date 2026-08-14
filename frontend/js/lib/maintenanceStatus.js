@@ -1,3 +1,6 @@
+import { svg_check, svg_clock, svg_alert } from "../svg/svgFn.js";
+
+
 /**
  * @typedef {'ok'|'due-soon'|'overdue'} MaintenanceStatus
  * @typedef {{ status: MaintenanceStatus, kmRemaining: number|null, daysRemaining: number|null }} StatusResult
@@ -9,6 +12,9 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /** @type {Record<MaintenanceStatus, string>} */
 const STATUS_LABELS = { ok: 'Al día', 'due-soon': 'Por vencer', overdue: 'Vencido' };
+
+/** @type {Record<MaintenanceStatus, () => string>} */
+const STATUS_ICONS = { ok: svg_check, 'due-soon': svg_clock, overdue: svg_alert };
 
 /**
  * Computes whether a maintenance item is due, based on the vehicle's current
@@ -104,4 +110,14 @@ function formatRemindersBanner(overdueCount, dueSoonCount) {
   return parts.join(' · ');
 }
 
-export { computeStatus, formatDueDetail, formatRemindersBanner, STATUS_LABELS };
+/**
+ * Icon+label markup for a status badge, shared by the item rows and the
+ * single-item view so the two never drift visually.
+ * @param {MaintenanceStatus} status
+ * @returns {string}
+ */
+function statusBadgeHtml(status) {
+  return `<span class="badge-icon">${STATUS_ICONS[status]()}</span><span class="badge-label">${STATUS_LABELS[status]}</span>`;
+}
+
+export { computeStatus, formatDueDetail, formatRemindersBanner, statusBadgeHtml, STATUS_LABELS };

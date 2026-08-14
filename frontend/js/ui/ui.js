@@ -1,13 +1,13 @@
 import { appState, dataState, dbStore, setStateField } from "../common/state.js";
 import { $, $button, $getInner, $queryOne } from "../lib/dom.js";
 import { _info, _log, _warn, openLogs } from "../lib/logger.js";
-import { arrow_left, pen_solid, svg_check, svg_clock, svg_share, svg_trash } from "../svg/svgFn.js";
+import { arrow_left, pen_solid, svg_check, svg_clock, svg_search, svg_share, svg_trash } from "../svg/svgFn.js";
 import {
   deleteVehicleFromForm, editVehicle, openAddVehicle, openMileageForm,
   submitMileageForm, submitVehicleForm, switchVehicle,
 } from "./vehicle-ui.js";
 import {
-  closeSingleItem, openItemForm, openSingleItem, submitItemBtn, submitItemForm, tryDeleteItem,
+  closeSingleItem, openItemForm, openSingleItem, submitItemBtn, submitItemForm, toggleSearch, tryDeleteItem,
 } from "./maintenance-ui.js";
 import { openServiceForm, submitServiceForm, tryDeleteServiceRecord } from "./service-ui.js";
 import { openMileageHistory } from "./mileage-ui.js";
@@ -42,7 +42,18 @@ function initUi() {
   $('mileageHistoryBtn').addEventListener('click', () => { openMileageHistory(); });
   $('shareReportBtn').innerHTML = svg_share();
   $('shareReportBtn').addEventListener('click', () => { shareVehicleReport(); });
+  $queryOne('.search-container .search-icon').innerHTML = svg_search();
   $('newItemBtn').addEventListener('click', () => { openItemForm(false); });
+
+  $button({
+    class: 'icon-btn search-toggle-btn',
+    svgFn: svg_search,
+    listener: { fn: toggleSearch },
+    appendTo: $('mainFooter'),
+  });
+  const searchToggleBtn = $queryOne('#mainFooter .search-toggle-btn');
+  searchToggleBtn.setAttribute('aria-label', 'Buscar');
+  searchToggleBtn.title = 'Buscar';
 
   $button({
     label: 'Marcar como realizado',

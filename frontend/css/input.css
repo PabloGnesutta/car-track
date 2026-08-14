@@ -6,6 +6,36 @@ input {
   border-radius: 6px;
   font-size: 24px;
   padding: 4px;
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  transition: border-color 120ms ease;
+}
+
+textarea:focus,
+input:focus {
+  border-color: var(--accent);
+}
+
+textarea::placeholder,
+input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Native number spin buttons clash with the app's custom button styling */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* The native calendar icon renders near-black; invert it to read on dark inputs */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
 }
 
 .base-form {
@@ -65,11 +95,6 @@ input {
   flex: 1;
 }
 
-textarea {
-  background-color: var(--surface-2);
-  color: var(--text-primary);
-}
-
 /* custom */
 #vehicleForm {
   --title-bg: var(--form-vehicle-title);
@@ -102,16 +127,49 @@ textarea {
 }
 
 .search-container {
-  padding: 4px;
+  position: relative;
+  padding: 0.5rem 1rem;
+  max-height: 60px;
+  opacity: 1;
+  visibility: visible;
+  overflow: hidden;
+  transition: max-height 220ms ease, opacity 160ms ease, padding 220ms ease, visibility 0s linear 0s;
+}
+
+#app[data-show-search='false'] .search-container {
+  max-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  pointer-events: none;
+  transition: max-height 220ms ease, opacity 160ms ease, padding 220ms ease, visibility 0s linear 220ms;
+}
+
+.search-container .search-icon {
+  position: absolute;
+  left: 1.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  display: flex;
+  color: var(--text-muted);
+  pointer-events: none;
 }
 
 .search-container input {
-  background-color: var(--surface-0);
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--text-faint);
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  border-radius: 999px;
+  font-size: 16px;
+  padding: 10px 14px 10px 40px;
+}
+
+.search-container input:focus {
+  border-color: var(--accent);
 }
 
 .search-container input::placeholder {
   color: var(--text-muted);
-  padding: 0 2px;
 }

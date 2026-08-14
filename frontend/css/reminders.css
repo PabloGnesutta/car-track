@@ -5,6 +5,7 @@
   font-size: 14px;
   font-weight: bold;
   color: var(--text-primary);
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .reminders-banner[data-status="overdue"] {

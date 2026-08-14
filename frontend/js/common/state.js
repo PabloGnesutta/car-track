@@ -19,6 +19,7 @@ import { _log } from "../lib/logger.js";
  * @property {boolean} showMileageHistory
  * @property {boolean} showItemForm
  * @property {boolean} showServiceForm
+ * @property {boolean} showSearch
  * @property {Views} currentView
  *
  * @typedef {'MaintenanceList'|'SingleItem'} Views
@@ -49,6 +50,7 @@ const appState = {
     showMileageHistory: false,
     showItemForm: false,
     showServiceForm: false,
+    showSearch: false,
     currentView: 'MaintenanceList',
 };
 
@@ -102,6 +104,7 @@ function initAppState() {
     setStateField('showMileageHistory', false);
     setStateField('showItemForm', false);
     setStateField('showServiceForm', false);
+    setStateField('showSearch', false);
     setCurrentView('MaintenanceList');
 }
 

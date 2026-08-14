@@ -9,6 +9,7 @@
   z-index: 1001;
   background-color: var(--text-primary);
   color: var(--surface-0);
+  box-shadow: 0 4px 16px var(--shadow);
   transition: all 500ms ease-out;
 }
 

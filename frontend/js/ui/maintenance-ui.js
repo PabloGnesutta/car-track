@@ -8,8 +8,9 @@ import {
   fetchMaintenanceItems, updateMaintenanceItem,
 } from "../local-db/maintenance-db.js";
 import { deleteItemHistory, restoreServiceRecords } from "../local-db/service-db.js";
-import { computeStatus, formatDueDetail, formatRemindersBanner, STATUS_LABELS } from "../lib/maintenanceStatus.js";
+import { computeStatus, formatDueDetail, formatRemindersBanner, statusBadgeHtml } from "../lib/maintenanceStatus.js";
 import { showUndoToast } from "../lib/toast.js";
+import { svg_wrench } from "../svg/svgFn.js";
 import { pageTitle } from "./ui.js";
 import { populateServiceHistory } from "./service-ui.js";
 import { renderVehicleChips } from "./vehicle-ui.js";
@@ -62,6 +63,24 @@ searchInput.addEventListener('input', e => {
   });
 });
 
+/**
+ * Shows/hides the search bar. Clears any active filter when hiding so
+ * items aren't left stuck filtered out with no visible way to search.
+ */
+function toggleSearch() {
+  const next = !appState.showSearch;
+  setStateField('showSearch', next);
+  if (next) {
+    searchInput.focus();
+  } else {
+    searchInput.value = '';
+    dbStore.maintenanceItems.forEach(item => {
+      const row = $queryOne(`[data-item-key="${item._key}"]`);
+      if (row) { row.classList.remove('display-none'); }
+    });
+  }
+}
+
 
 /**
  * Fetch all maintenance items for the vehicle, sorted by urgency, and render the list.
@@ -73,7 +92,7 @@ async function fetchAndRenderMaintenanceItems(vehicle) {
   if (!items.length) {
     itemList.append($new({
       class: 'empty-state',
-      text: 'No hay ítems de mantenimiento todavía. Tocá + para agregar uno.',
+      html: `<div class="empty-state-icon">${svg_wrench()}</div><p>No hay ítems de mantenimiento todavía. Tocá + para agregar uno.</p>`,
     }));
     updateRemindersBanner(0, 0);
   } else {
@@ -133,7 +152,7 @@ function appendItemRow(item, vehicle) {
       $new({
         class: 'right-side',
         children: [
-          $new({ class: 'status-badge', text: STATUS_LABELS[status] }),
+          $new({ class: 'status-badge', html: statusBadgeHtml(status) }),
           $new({ class: 'due-detail', text: formatDueDetail({ status, kmRemaining, daysRemaining }) }),
         ],
       }),
@@ -252,7 +271,7 @@ async function openSingleItem(itemKey) {
 function renderItemDetail(item, vehicle) {
   const { status, kmRemaining, daysRemaining } = computeStatus(item, vehicle.currentMileage, vehicle.currentMileageDate);
   itemName.innerText = item.name;
-  statusBadge.innerText = STATUS_LABELS[status];
+  statusBadge.innerHTML = statusBadgeHtml(status);
   statusBadge.dataset.status = status;
   dueDetail.dataset.status = status;
   dueDetail.innerText = formatDueDetail({ status, kmRemaining, daysRemaining });
@@ -328,4 +347,5 @@ async function refreshAfterService(item) {
 export {
   fetchAndRenderMaintenanceItems, openMaintenanceList, openItemForm, submitItemForm,
   openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService, deleteAllItemsForVehicle,
+  toggleSearch,
 };

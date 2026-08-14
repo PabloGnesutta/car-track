@@ -56,10 +56,30 @@ test('search filters the item list by name', async ({ page }) => {
   await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
   await createMaintenanceItem(page, { name: 'Rotación de neumáticos', intervalKm: 10000 });
 
+  await page.click('.search-toggle-btn');
   await page.fill('#searchItem', 'aceite');
 
   await expect(page.locator('.row:has-text("Cambio de aceite")')).toBeVisible();
   await expect(page.locator('.row:has-text("Rotación de neumáticos")')).toHaveClass(/display-none/);
+});
+
+test('the search bar is hidden by default and toggles via the footer button', async ({ page }) => {
+  await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
+  await createMaintenanceItem(page, { name: 'Rotación de neumáticos', intervalKm: 10000 });
+
+  await expect(page.locator('#searchItem')).not.toBeVisible();
+
+  await page.click('.search-toggle-btn');
+  await expect(page.locator('#searchItem')).toBeVisible();
+  await expect(page.locator('#searchItem')).toBeFocused();
+
+  await page.fill('#searchItem', 'aceite');
+  await expect(page.locator('.row:has-text("Rotación de neumáticos")')).toHaveClass(/display-none/);
+
+  // Hiding the search bar again clears the filter, so nothing is left stuck hidden.
+  await page.click('.search-toggle-btn');
+  await expect(page.locator('#searchItem')).not.toBeVisible();
+  await expect(page.locator('.row:has-text("Rotación de neumáticos")')).not.toHaveClass(/display-none/);
 });
 
 test('opening a single item shows its detail view', async ({ page }) => {
