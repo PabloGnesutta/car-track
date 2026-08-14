@@ -4,6 +4,7 @@ import { pen_solid } from "../svg/svgFn.js";
 import { setAppBadge } from "../lib/badge.js";
 import { notifyDueItemsOnce } from "../lib/notifications.js";
 import { showConfirm } from "./confirm-ui.js";
+import { resetVoiceStatus } from "./voice-mileage-ui.js";
 import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
 import { deleteVehicleMileageHistory } from "../local-db/mileage-db.js";
 import { deleteVehicleFuelHistory } from "../local-db/fuel-db.js";
@@ -256,6 +257,7 @@ function openMileageForm() {
   if (!dataState.currentVehicle) { return; }
   mileageInput.value = dataState.currentVehicle.currentMileage.toString();
   mileageNotesInput.value = '';
+  resetVoiceStatus();
   setStateField('showMileageForm', true);
   mileageInput.focus();
   mileageInput.select();

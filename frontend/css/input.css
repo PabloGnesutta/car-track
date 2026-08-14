@@ -127,6 +127,63 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --content-bg: var(--form-mileage-content);
 }
 
+.mileage-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mileage-input-row input {
+  flex: 1;
+}
+
+#voiceMileageBtn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  color: var(--text-primary);
+  background-color: var(--overlay-medium);
+}
+
+#voiceMileageBtn svg {
+  width: 20px;
+  height: 20px;
+}
+
+#voiceMileageBtn.listening {
+  color: var(--status-overdue-text);
+  background-color: var(--status-overdue);
+  animation: voice-mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes voice-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--status-overdue); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
+
+.voice-status {
+  min-height: 1.2em;
+  font-size: 13px;
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+.voice-status[data-type="success"] {
+  color: var(--status-ok-text);
+}
+
+.voice-status[data-type="error"] {
+  color: var(--status-overdue-text);
+}
+
+.voice-status[data-type="listening"] {
+  color: var(--accent);
+}
+
 #fuelForm {
   --title-bg: var(--form-fuel-title);
   --content-bg: var(--form-fuel-content);

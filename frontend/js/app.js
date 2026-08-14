@@ -10,6 +10,7 @@ import { activateVehicle, openVehicleForm } from "./ui/vehicle-ui.js";
 import { seedDb } from "./local-db/seed.js";
 import { initBackupUi } from "./ui/backup-ui.js";
 import { initNotificationsUi } from "./ui/notifications-ui.js";
+import { initVoiceMileageUi } from "./ui/voice-mileage-ui.js";
 
 
 _info(' (!) App started');
@@ -60,3 +61,4 @@ initUi();
 dbugBtns();
 initBackupUi($('mainFooter'));
 initNotificationsUi($('mainFooter'));
+initVoiceMileageUi();

@@ -149,7 +149,11 @@
           <div class="form-content">
             <div class="form-control">
               <label for="mileage">Kilometraje</label>
-              <input type="number" step="1" min="0" name="mileage" />
+              <div class="mileage-input-row">
+                <input type="number" step="1" min="0" name="mileage" />
+                <div id="voiceMileageBtn" role="button" class="icon-btn" aria-label="Dictar kilometraje por voz" title="Dictar por voz"></div>
+              </div>
+              <div class="voice-status"><!-- --></div>
             </div>
             <div class="form-control">
               <label for="mileageNotes">Notas (opcional)</label>

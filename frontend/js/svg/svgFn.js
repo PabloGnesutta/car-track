@@ -30,9 +30,11 @@ const svg_chart = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24
 
 const svg_fuel = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 10h10"/><path d="M15 8l3 3v7a1.5 1.5 0 0 0 3 0v-5.5a2.5 2.5 0 0 0-2.5-2.5H18"/></svg>`;
 
+const svg_mic = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5"/><path d="M8 22h8"/></svg>`;
+
 
 export {
   arrow_left, pen_solid, svg_trash, svg_notes, svg_check, svg_clock, svg_share,
   svg_download, svg_upload, svg_bell, svg_bell_off, svg_alert, svg_search, svg_wrench,
-  svg_chart, svg_fuel,
+  svg_chart, svg_fuel, svg_mic,
 };
