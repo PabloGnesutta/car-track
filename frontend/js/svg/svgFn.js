@@ -26,8 +26,13 @@ const svg_search = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2
 
 const svg_wrench = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.8 2.8-2-2z"/></svg>`;
 
+const svg_chart = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10"/><path d="M12 20V4"/><path d="M20 20v-7"/></svg>`;
+
+const svg_fuel = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16"/><path d="M3 10h10"/><path d="M15 8l3 3v7a1.5 1.5 0 0 0 3 0v-5.5a2.5 2.5 0 0 0-2.5-2.5H18"/></svg>`;
+
 
 export {
   arrow_left, pen_solid, svg_trash, svg_notes, svg_check, svg_clock, svg_share,
   svg_download, svg_upload, svg_bell, svg_bell_off, svg_alert, svg_search, svg_wrench,
+  svg_chart, svg_fuel,
 };

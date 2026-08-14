@@ -1,7 +1,7 @@
 import { appState, dataState, dbStore, setStateField } from "../common/state.js";
 import { $, $button, $getInner, $queryOne } from "../lib/dom.js";
 import { _info, _log, _warn, openLogs } from "../lib/logger.js";
-import { arrow_left, pen_solid, svg_check, svg_clock, svg_search, svg_share, svg_trash } from "../svg/svgFn.js";
+import { arrow_left, pen_solid, svg_chart, svg_check, svg_clock, svg_fuel, svg_search, svg_share, svg_trash } from "../svg/svgFn.js";
 import {
   deleteVehicleFromForm, editVehicle, openAddVehicle, openMileageForm,
   submitMileageForm, submitVehicleForm, switchVehicle,
@@ -12,6 +12,8 @@ import {
 import { openServiceForm, submitServiceForm, tryDeleteServiceRecord } from "./service-ui.js";
 import { openMileageHistory } from "./mileage-ui.js";
 import { shareVehicleReport } from "./report-ui.js";
+import { openCostAnalytics } from "./analytics-ui.js";
+import { openFuelForm, openFuelHistory, submitFuelForm } from "./fuel-ui.js";
 
 
 const mainHeader = $('mainHeader');
@@ -40,6 +42,10 @@ function initUi() {
   $('logMileageBtn').addEventListener('click', () => { openMileageForm(); });
   $('mileageHistoryBtn').innerHTML = svg_clock();
   $('mileageHistoryBtn').addEventListener('click', () => { openMileageHistory(); });
+  $('costAnalyticsBtn').innerHTML = svg_chart();
+  $('costAnalyticsBtn').addEventListener('click', () => { openCostAnalytics(); });
+  $('fuelHistoryBtn').innerHTML = svg_fuel();
+  $('fuelHistoryBtn').addEventListener('click', () => { openFuelHistory(); });
   $('shareReportBtn').innerHTML = svg_share();
   $('shareReportBtn').addEventListener('click', () => { shareVehicleReport(); });
   $queryOne('.search-container .search-icon').innerHTML = svg_search();
@@ -80,6 +86,20 @@ function initUi() {
     label: 'Actualizar',
     listener: { fn: submitMileageForm },
     appendTo: $queryOne('#mileageForm .submit'),
+  });
+
+  $button({
+    label: 'Cargar Combustible',
+    svgFn: svg_fuel,
+    class: 'horizontal',
+    listener: { fn: openFuelForm },
+    appendTo: $('addFuelBtn'),
+  });
+
+  $button({
+    label: 'Guardar',
+    listener: { fn: submitFuelForm },
+    appendTo: $queryOne('#fuelForm .submit'),
   });
 
   $button({
@@ -159,6 +179,9 @@ function modalBackdropHandler() {
       setStateField('showMileageHistory', false);
       setStateField('showItemForm', false);
       setStateField('showServiceForm', false);
+      setStateField('showCostAnalytics', false);
+      setStateField('showFuelForm', false);
+      setStateField('showFuelHistory', false);
     }
   });
 }

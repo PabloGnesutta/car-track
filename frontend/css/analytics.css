@@ -1,0 +1,145 @@
+.cost-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background-color: var(--overlay-faint);
+}
+
+.cost-total .label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cost-total .value {
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.cost-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem;
+  font-size: 14px;
+}
+
+.cost-section {
+  margin-top: 1rem;
+}
+
+.cost-section h4 {
+  font-size: 16px;
+  padding: 0.25rem 0.25rem 0.5rem;
+  color: var(--text-secondary);
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  background-color: var(--overlay-faint);
+  margin-bottom: 6px;
+}
+
+.cost-row .cost-row-label {
+  font-size: 15px;
+}
+
+.cost-row .cost-row-value {
+  font-size: 15px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.fuel-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 0.5rem;
+}
+
+.fuel-history-list .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background-color: var(--overlay-soft);
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.fuel-history-list .row .mileage {
+  font-size: 18px;
+}
+
+.fuel-history-list .row .right-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.fuel-row .liters {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.fuel-row .efficiency {
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.fuel-average {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  background-color: var(--overlay-faint);
+}
+
+.fuel-average .label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.fuel-average .value {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.fuel-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem;
+  font-size: 14px;
+}
+
+#fuelHistoryModal .btns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+}
+
+#addFuelBtn .btn {
+  padding: 1rem 1.5rem;
+  background-color: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
+}
+
+#addFuelBtn .icon {
+  width: 18px;
+  height: 18px;
+}

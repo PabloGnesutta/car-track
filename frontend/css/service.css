@@ -27,6 +27,11 @@
   border-radius: 4px;
 }
 
+.service-history-list .row .cost {
+  color: var(--status-ok-text);
+  font-size: 14px;
+}
+
 .service-history-list .row .right-side {
   display: flex;
   flex-direction: row;

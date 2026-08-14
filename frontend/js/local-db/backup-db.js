@@ -1,4 +1,5 @@
 import { clearStore, getAll, putOne } from "../lib/indexedDb.js";
+import { isValidBackupData, reviveDates } from "../lib/backupValidation.js";
 
 
 /**
@@ -15,6 +16,7 @@ import { clearStore, getAll, putOne } from "../lib/indexedDb.js";
  * @property {import("./maintenance-db.js").MaintenanceItem[]} maintenanceItems
  * @property {import("./service-db.js").ServiceRecord[]} serviceHistory
  * @property {import("./mileage-db.js").MileageHistoryRecord[]} mileageHistory
+ * @property {import("./fuel-db.js").FuelRecord[]} [fuelHistory] - Optional: absent in backups exported before fuel tracking existed.
  */
 
 const BACKUP_VERSION = 1;
@@ -25,11 +27,12 @@ const BACKUP_VERSION = 1;
  * @returns {Promise<BackupData>}
  */
 async function exportAllData() {
-  const [vehicles, maintenanceItems, serviceHistory, mileageHistory] = await Promise.all([
+  const [vehicles, maintenanceItems, serviceHistory, mileageHistory, fuelHistory] = await Promise.all([
     getAll('vehicles'),
     getAll('maintenanceItems'),
     getAll('serviceHistory'),
     getAll('mileageHistory'),
+    getAll('fuelHistory'),
   ]);
 
   // @ts-ignore
@@ -37,7 +40,7 @@ async function exportAllData() {
     app: 'CarTrack',
     backupVersion: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    vehicles, maintenanceItems, serviceHistory, mileageHistory,
+    vehicles, maintenanceItems, serviceHistory, mileageHistory, fuelHistory,
   };
 }
 
@@ -49,9 +52,7 @@ async function exportAllData() {
  * @returns {ServiceReturn<boolean>}
  */
 async function restoreAllData(data) {
-  if (!data || typeof data !== 'object'
-    || !Array.isArray(data.vehicles) || !Array.isArray(data.maintenanceItems)
-    || !Array.isArray(data.serviceHistory) || !Array.isArray(data.mileageHistory)) {
+  if (!isValidBackupData(data)) {
     return { errorMsg: 'El archivo no tiene el formato esperado de un backup de CarTrack' };
   }
 
@@ -59,6 +60,7 @@ async function restoreAllData(data) {
   await clearStore('maintenanceItems');
   await clearStore('serviceHistory');
   await clearStore('mileageHistory');
+  await clearStore('fuelHistory');
 
   for (const vehicle of data.vehicles) {
     reviveDates(vehicle, ['currentMileageDate', 'createdAt', 'updatedAt']);
@@ -77,21 +79,13 @@ async function restoreAllData(data) {
     reviveDates(record, ['date', 'createdAt']);
     await putOne('mileageHistory', record, record._key);
   }
+  // Optional — absent in backups exported before fuel tracking existed.
+  for (const record of (Array.isArray(data.fuelHistory) ? data.fuelHistory : [])) {
+    reviveDates(record, ['date', 'createdAt']);
+    await putOne('fuelHistory', record, record._key);
+  }
 
   return { data: true };
 }
-
-/**
- * Mutates the given object, turning ISO date strings back into Date
- * instances for the listed fields (JSON.parse leaves them as strings).
- * @param {Record<string, *>} obj
- * @param {string[]} fields
- */
-function reviveDates(obj, fields) {
-  fields.forEach(field => {
-    if (obj[field]) { obj[field] = new Date(obj[field]); }
-  });
-}
-
 
 export { exportAllData, restoreAllData };

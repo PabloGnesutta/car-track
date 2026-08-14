@@ -104,7 +104,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #vehicleForm .submit .btn,
 #mileageForm .submit .btn,
 #itemForm .submit .btn,
-#serviceForm .submit .btn {
+#serviceForm .submit .btn,
+#fuelForm .submit .btn {
   background-color: var(--accent-strong);
   padding: 2rem;
   font-size: 22px;
@@ -124,6 +125,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #mileageForm {
   --title-bg: var(--form-mileage-title);
   --content-bg: var(--form-mileage-content);
+}
+
+#fuelForm {
+  --title-bg: var(--form-fuel-title);
+  --content-bg: var(--form-fuel-content);
 }
 
 .search-container {

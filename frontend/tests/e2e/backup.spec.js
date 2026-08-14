@@ -33,12 +33,20 @@ test('export then import round-trips the data (survives the confirm/alert dialog
   ]);
   const backupPath = await download.path();
 
-  page.on('dialog', dialog => dialog.accept());
-
   const fileInput = page.locator('input[type="file"]');
   await fileInput.setInputFiles(backupPath);
 
-  await page.waitForLoadState('load');
+  // Custom confirm dialog (replaces the native confirm()) for the destructive "replace all data" warning.
+  await page.waitForSelector('#confirmDialog.show');
+  await page.click('#confirmDialog .confirm-ok .btn');
+
+  // Custom alert dialog (replaces the native alert()) for the success message, then the page reloads.
+  await page.waitForSelector('#confirmDialog.show');
+  await Promise.all([
+    page.waitForEvent('load'),
+    page.click('#confirmDialog .confirm-ok .btn'),
+  ]);
+
   await expect(page.locator('.vehicle-chip.active .vehicleName')).toHaveText('Original');
   await expect(page.locator('.row:has-text("Cambio de aceite")')).toBeVisible();
 });

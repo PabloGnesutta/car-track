@@ -43,6 +43,8 @@
   --form-service-content: #0d3339;
   --form-mileage-title: #5c2340;
   --form-mileage-content: #3c162b;
+  --form-fuel-title: #5c4016;
+  --form-fuel-content: #3c2a10;
 
   /* Overlays & scrims */
   --overlay-faint: rgba(255, 255, 255, 0.05);
@@ -264,8 +266,66 @@ svg {
 }
 
 #maintenanceListView .list .row {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+#maintenanceListView .list .row-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2dvw;
+  position: relative;
+  z-index: 1;
+  padding: 0.5rem;
+  border-radius: 6px;
   background: var(--list-row-bg);
   box-shadow: 0 1px 3px var(--shadow);
+  transition: transform 200ms ease;
+  touch-action: pan-y;
+}
+
+#maintenanceListView .list .row-content.dragging {
+  transition: none;
+}
+
+#maintenanceListView .list .row-content:active {
+  background-color: var(--press-bg);
+}
+
+#maintenanceListView .list .swipe-action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 90px;
+  display: flex;
+  align-items: center;
+  color: var(--text-primary);
+}
+
+#maintenanceListView .list .swipe-action svg {
+  width: 22px;
+  height: 22px;
+}
+
+#maintenanceListView .list .swipe-action-right {
+  left: 0;
+  justify-content: flex-start;
+  padding-left: 1.25rem;
+  background: var(--status-ok);
+  border-radius: 6px 0 0 6px;
+}
+
+#maintenanceListView .list .swipe-action-left {
+  right: 0;
+  justify-content: flex-end;
+  padding-right: 1.25rem;
+  background: var(--status-overdue);
+  border-radius: 0 6px 6px 0;
 }
 
 #maintenanceListView .list .row .left-side {
@@ -389,15 +449,15 @@ svg {
 }
 
 /* Left-border accent so urgency reads at a glance, before the text does */
-.list .row[data-status="ok"] {
+#maintenanceListView .list .row[data-status="ok"] .row-content {
   border-left: 4px solid var(--status-ok);
 }
 
-.list .row[data-status="due-soon"] {
+#maintenanceListView .list .row[data-status="due-soon"] .row-content {
   border-left: 4px solid var(--status-due-soon);
 }
 
-.list .row[data-status="overdue"] {
+#maintenanceListView .list .row[data-status="overdue"] .row-content {
   border-left: 4px solid var(--status-overdue);
 }
 
@@ -565,7 +625,10 @@ svg {
 #app[data-show-mileage-form='true'] .modal,
 #app[data-show-mileage-history='true'] .modal,
 #app[data-show-item-form='true'] .modal,
-#app[data-show-service-form='true'] .modal {
+#app[data-show-service-form='true'] .modal,
+#app[data-show-cost-analytics='true'] .modal,
+#app[data-show-fuel-form='true'] .modal,
+#app[data-show-fuel-history='true'] .modal {
   opacity: 1;
   visibility: visible;
   transition: opacity 200ms ease;
@@ -575,7 +638,10 @@ svg {
 #app[data-show-mileage-form='true'] .modal .content,
 #app[data-show-mileage-history='true'] .modal .content,
 #app[data-show-item-form='true'] .modal .content,
-#app[data-show-service-form='true'] .modal .content {
+#app[data-show-service-form='true'] .modal .content,
+#app[data-show-cost-analytics='true'] .modal .content,
+#app[data-show-fuel-form='true'] .modal .content,
+#app[data-show-fuel-history='true'] .modal .content {
   transform: translateY(0) scale(1);
 }
 
@@ -583,7 +649,10 @@ svg {
 #app[data-show-mileage-form='false'] #mileageForm,
 #app[data-show-mileage-history='false'] #mileageHistoryModal,
 #app[data-show-item-form='false'] #itemForm,
-#app[data-show-service-form='false'] #serviceForm {
+#app[data-show-service-form='false'] #serviceForm,
+#app[data-show-cost-analytics='false'] #costAnalyticsModal,
+#app[data-show-fuel-form='false'] #fuelForm,
+#app[data-show-fuel-history='false'] #fuelHistoryModal {
   display: none;
 }
 

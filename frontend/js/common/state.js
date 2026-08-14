@@ -7,6 +7,7 @@ import { _log } from "../lib/logger.js";
  * @typedef {import("../local-db/maintenance-db.js").MaintenanceItem} MaintenanceItem
  * @typedef {import("../local-db/service-db.js").ServiceRecord} ServiceRecord
  * @typedef {import("../local-db/mileage-db.js").MileageHistoryRecord} MileageHistoryRecord
+ * @typedef {import("../local-db/fuel-db.js").FuelRecord} FuelRecord
  */
 
 /**
@@ -20,6 +21,9 @@ import { _log } from "../lib/logger.js";
  * @property {boolean} showItemForm
  * @property {boolean} showServiceForm
  * @property {boolean} showSearch
+ * @property {boolean} showCostAnalytics
+ * @property {boolean} showFuelForm
+ * @property {boolean} showFuelHistory
  * @property {Views} currentView
  *
  * @typedef {'MaintenanceList'|'SingleItem'} Views
@@ -36,6 +40,7 @@ import { _log } from "../lib/logger.js";
  * @property {MaintenanceItem[]} maintenanceItems
  * @property {Record<string, ServiceRecord[]>} serviceHistory
  * @property {Record<string, MileageHistoryRecord[]>} mileageHistory
+ * @property {Record<string, FuelRecord[]>} fuelHistory
  */
 
 /**
@@ -51,6 +56,9 @@ const appState = {
     showItemForm: false,
     showServiceForm: false,
     showSearch: false,
+    showCostAnalytics: false,
+    showFuelForm: false,
+    showFuelHistory: false,
     currentView: 'MaintenanceList',
 };
 
@@ -74,6 +82,8 @@ const dbStore = {
     serviceHistory: {},
     /** Key is vehicle ID, value is the mileage history array */
     mileageHistory: {},
+    /** Key is vehicle ID, value is the fuel history array */
+    fuelHistory: {},
 };
 
 const $app = $('app');
@@ -105,6 +115,9 @@ function initAppState() {
     setStateField('showItemForm', false);
     setStateField('showServiceForm', false);
     setStateField('showSearch', false);
+    setStateField('showCostAnalytics', false);
+    setStateField('showFuelForm', false);
+    setStateField('showFuelHistory', false);
     setCurrentView('MaintenanceList');
 }
 

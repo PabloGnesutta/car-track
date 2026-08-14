@@ -2,6 +2,7 @@ import { $button, $new } from "../lib/dom.js";
 import { svg_bell, svg_bell_off } from "../svg/svgFn.js";
 import { getNotificationPermission, notificationsSupported, requestNotificationPermission } from "../lib/notifications.js";
 import { renderVehicleChips } from "./vehicle-ui.js";
+import { showAlert } from "./confirm-ui.js";
 
 
 /** @type {HTMLElement|null} */
@@ -59,7 +60,7 @@ async function handleClick() {
   if (permission === 'granted') { return; }
 
   if (permission === 'denied') {
-    alert('Las notificaciones están bloqueadas para este sitio. Para activarlas, habilitalas desde la configuración del navegador.');
+    await showAlert('Las notificaciones están bloqueadas para este sitio. Para activarlas, habilitalas desde la configuración del navegador.');
     return;
   }
 

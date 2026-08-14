@@ -14,6 +14,7 @@ import { deleteMany, deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb
  * @property {number} mileage
  * @property {Date} date
  * @property {string} [notes]
+ * @property {number|null} [cost]
  * @property {IDBValidKey} [_key]
  * @property {Date} [createdAt]
  */
@@ -26,15 +27,16 @@ import { deleteMany, deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb
  * @param {number} mileage
  * @param {Date} date
  * @param {string} [notes]
+ * @param {number|null} [cost]
  * @returns {ServiceReturn<ServiceRecord>}
  */
-async function markItemServiced(item, mileage, date, notes = '') {
+async function markItemServiced(item, mileage, date, notes = '', cost = null) {
   const itemKey = item._key;
   if (!itemKey) { return { errorMsg: 'Ítem sin llave' }; }
   if (!Number.isFinite(mileage)) { return { errorMsg: 'Ingresar un kilometraje válido' }; }
 
   /** @type {ServiceRecord} */
-  const record = { itemKey, mileage, date, notes, createdAt: new Date() };
+  const record = { itemKey, mileage, date, notes, cost, createdAt: new Date() };
   record._key = await putOne('serviceHistory', record);
 
   item.lastServiceMileage = mileage;

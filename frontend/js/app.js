@@ -18,6 +18,23 @@ initializeCache();
 
 initializeIndexedDb();
 
+/**
+ * Hides the loading skeleton shown while IndexedDB initializes. Also
+ * called by a safety-net timeout in case initialization never completes
+ * (e.g. IndexedDB unavailable), so the app doesn't get stuck behind it.
+ */
+let skeletonHidden = false;
+function hideLoadingSkeleton() {
+    if (skeletonHidden) { return; }
+    skeletonHidden = true;
+    clearTimeout(skeletonSafetyTimeout);
+    const skeleton = $('loadingSkeleton');
+    if (!skeleton) { return; }
+    skeleton.classList.add('hidden');
+    setTimeout(() => skeleton.remove(), 300);
+}
+const skeletonSafetyTimeout = setTimeout(hideLoadingSkeleton, 8000);
+
 /** Callback for Indexed DB initialization */
 eventBus.on('IndexedDbInited', async ({ version }) => {
     // await seedDb();
@@ -34,6 +51,8 @@ eventBus.on('IndexedDbInited', async ({ version }) => {
     } else {
         await activateVehicle(currentVehicle);
     }
+
+    hideLoadingSkeleton();
 });
 
 initAppState();

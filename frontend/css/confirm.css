@@ -1,0 +1,54 @@
+.confirm-modal.show {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 200ms ease;
+}
+
+.confirm-modal.show .content {
+  transform: translateY(0) scale(1);
+}
+
+.confirm-modal .content {
+  position: relative;
+  top: auto;
+  width: 85%;
+  max-width: 380px;
+  padding: 1.5rem;
+  background-color: var(--surface-2);
+}
+
+.confirm-modal .confirm-message {
+  font-size: 17px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.confirm-modal .confirm-btns {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.confirm-modal .confirm-btns .btn {
+  flex: 1;
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.confirm-modal .confirm-cancel .btn {
+  background-color: var(--surface-3);
+  color: var(--text-primary);
+}
+
+.confirm-modal .confirm-ok .btn {
+  background-color: var(--accent-strong);
+  color: var(--text-primary);
+  border: 1px solid var(--accent);
+}
+
+.confirm-modal .confirm-ok.danger .btn {
+  background-color: var(--status-overdue);
+  border-color: var(--status-overdue-text);
+}

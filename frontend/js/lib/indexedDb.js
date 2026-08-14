@@ -4,7 +4,7 @@ import { eventBus } from './utils.js';
 
 /**
  * Enums
- * @typedef {'vehicles'|'maintenanceItems'|'serviceHistory'|'mileageHistory'} ObjectStores
+ * @typedef {'vehicles'|'maintenanceItems'|'serviceHistory'|'mileageHistory'|'fuelHistory'} ObjectStores
  * @typedef {'vehicleKey'|'itemKey'} Indexes
  *
  * @typedef {IDBValidKey | IDBKeyRange} StoreKey
@@ -12,7 +12,7 @@ import { eventBus } from './utils.js';
  */
 
 const dbName = 'CarTrack';
-const dbVersion = 2;
+const dbVersion = 3;
 
 
 /** @type {Record<ObjectStores, ObjectStores>} */
@@ -21,6 +21,7 @@ const _stores = {
   maintenanceItems: 'maintenanceItems',
   serviceHistory: 'serviceHistory',
   mileageHistory: 'mileageHistory',
+  fuelHistory: 'fuelHistory',
 };
 
 /** @type {IDBOpenDBRequest} */
@@ -67,6 +68,14 @@ function onDbUpgradeNeeded() {
   if (!db.objectStoreNames.contains(_stores.mileageHistory)) {
     const store = db.createObjectStore(
       _stores.mileageHistory,
+      { autoIncrement: true }
+    );
+    store.createIndex('vehicleKey', 'vehicleKey', { unique: false });
+  }
+
+  if (!db.objectStoreNames.contains(_stores.fuelHistory)) {
+    const store = db.createObjectStore(
+      _stores.fuelHistory,
       { autoIncrement: true }
     );
     store.createIndex('vehicleKey', 'vehicleKey', { unique: false });

@@ -10,9 +10,10 @@ import {
 import { deleteItemHistory, restoreServiceRecords } from "../local-db/service-db.js";
 import { computeStatus, formatDueDetail, formatRemindersBanner, statusBadgeHtml } from "../lib/maintenanceStatus.js";
 import { showUndoToast } from "../lib/toast.js";
-import { svg_wrench } from "../svg/svgFn.js";
+import { svg_check, svg_trash, svg_wrench } from "../svg/svgFn.js";
+import { haptic } from "../lib/haptics.js";
 import { pageTitle } from "./ui.js";
-import { populateServiceHistory } from "./service-ui.js";
+import { openServiceForm, populateServiceHistory } from "./service-ui.js";
 import { renderVehicleChips } from "./vehicle-ui.js";
 
 
@@ -148,12 +149,19 @@ function appendItemRow(item, vehicle) {
       ['status', status],
     ],
     children: [
-      $new({ class: 'left-side', children: nameChildren }),
+      $new({ class: 'swipe-action swipe-action-right', html: svg_check() }),
+      $new({ class: 'swipe-action swipe-action-left', html: svg_trash() }),
       $new({
-        class: 'right-side',
+        class: 'row-content',
         children: [
-          $new({ class: 'status-badge', html: statusBadgeHtml(status) }),
-          $new({ class: 'due-detail', text: formatDueDetail({ status, kmRemaining, daysRemaining }) }),
+          $new({ class: 'left-side', children: nameChildren }),
+          $new({
+            class: 'right-side',
+            children: [
+              $new({ class: 'status-badge', html: statusBadgeHtml(status) }),
+              $new({ class: 'due-detail', text: formatDueDetail({ status, kmRemaining, daysRemaining }) }),
+            ],
+          }),
         ],
       }),
     ],
@@ -162,6 +170,85 @@ function appendItemRow(item, vehicle) {
   itemList.append(row);
   return status;
 }
+
+/**
+ * Swipe-to-act on maintenance item rows: dragging right past the threshold
+ * opens the "mark as serviced" form for that item, dragging left past the
+ * threshold deletes it (with the existing undo toast). A plain tap (no
+ * meaningful horizontal movement) is left alone so the normal click-to-open
+ * navigation still fires.
+ */
+const SWIPE_COMMIT_PX = 80;
+const SWIPE_MAX_PX = 120;
+const SWIPE_START_PX = 10;
+
+/** @type {{ row: HTMLElement, content: HTMLElement, item: MaintenanceItem, pointerId: number, startX: number, startY: number, dx: number, dragging: boolean } | null} */
+let swipeState = null;
+
+itemList.addEventListener('pointerdown', e => {
+  // @ts-ignore
+  const row = e.target.closest?.('.row[data-item-key]');
+  if (!row) { return; }
+  const key = +row.dataset.itemKey;
+  const item = dbStore.maintenanceItems.find(i => i._key === key);
+  const content = row.querySelector('.row-content');
+  if (!item || !content) { return; }
+  swipeState = { row, content, item, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, dx: 0, dragging: false };
+});
+
+itemList.addEventListener('pointermove', e => {
+  if (!swipeState || e.pointerId !== swipeState.pointerId) { return; }
+  const dx = e.clientX - swipeState.startX;
+  const dy = e.clientY - swipeState.startY;
+
+  if (!swipeState.dragging) {
+    if (Math.abs(dy) > SWIPE_START_PX && Math.abs(dy) > Math.abs(dx)) {
+      // Vertical scroll gesture — abandon and let it scroll normally.
+      swipeState = null;
+      return;
+    }
+    if (Math.abs(dx) <= SWIPE_START_PX) { return; }
+    swipeState.dragging = true;
+    swipeState.content.classList.add('dragging');
+    swipeState.row.setPointerCapture(swipeState.pointerId);
+  }
+
+  swipeState.dx = dx;
+  const clamped = Math.max(-SWIPE_MAX_PX, Math.min(SWIPE_MAX_PX, dx));
+  swipeState.content.style.transform = `translateX(${clamped}px)`;
+  swipeState.row.classList.toggle('reveal-right', clamped > SWIPE_COMMIT_PX / 2);
+  swipeState.row.classList.toggle('reveal-left', clamped < -SWIPE_COMMIT_PX / 2);
+});
+
+itemList.addEventListener('pointerup', e => {
+  if (!swipeState || e.pointerId !== swipeState.pointerId) { return; }
+  const { row, content, item, dragging, dx } = swipeState;
+  swipeState = null;
+  if (!dragging) { return; }
+
+  content.classList.remove('dragging');
+  content.style.transform = '';
+  row.classList.remove('reveal-right', 'reveal-left');
+
+  const vehicle = dataState.currentVehicle;
+  if (!vehicle) { return; }
+  if (dx > SWIPE_COMMIT_PX) {
+    haptic();
+    dataState.currentItem = item;
+    openServiceForm();
+  } else if (dx < -SWIPE_COMMIT_PX) {
+    dataState.currentItem = item;
+    tryDeleteItem();
+  }
+});
+
+itemList.addEventListener('pointercancel', () => {
+  if (!swipeState) { return; }
+  swipeState.content.classList.remove('dragging');
+  swipeState.content.style.transform = '';
+  swipeState.row.classList.remove('reveal-right', 'reveal-left');
+  swipeState = null;
+});
 
 /**
  * Open create/edit maintenance item modal.
@@ -299,6 +386,7 @@ async function tryDeleteItem() {
 
   const historySnapshot = (dbStore.serviceHistory[itemKey.toString()] || []).slice();
 
+  haptic();
   await deleteMaintenanceItem(itemKey);
   await deleteItemHistory(itemKey);
 

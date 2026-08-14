@@ -6,6 +6,7 @@ import { dataState, dbStore, setStateField } from "../common/state.js";
 import { deleteServiceRecord, getServiceHistory, markItemServiced } from "../local-db/service-db.js";
 import { showUndoToast } from "../lib/toast.js";
 import { svg_notes, svg_trash } from "../svg/svgFn.js";
+import { haptic } from "../lib/haptics.js";
 import { refreshAfterService } from "./maintenance-ui.js";
 
 
@@ -20,6 +21,7 @@ const historyList = $getInner(singleItemView, '.service-history-list');
 const serviceForm = $form('serviceForm');
 const serviceMileageInput = $queryOneInput('#serviceForm input[name="serviceMileage"]');
 const serviceDateInput = $queryOneInput('#serviceForm input[name="serviceDate"]');
+const serviceCostInput = $queryOneInput('#serviceForm input[name="serviceCost"]');
 const serviceNotesInput = $queryOneInput('#serviceForm textarea[name="serviceNotes"]');
 
 // Intercept native form submission (e.g. pressing Enter in a field) so it
@@ -60,6 +62,9 @@ function appendServiceHistoryRow(record, prepend = false) {
     ],
   });
 
+  if (record.cost) {
+    _rightSide.prepend($new({ class: 'cost', text: `$${record.cost.toLocaleString('es', { maximumFractionDigits: 2 })}` }));
+  }
   if (record.notes) {
     _rightSide.append($new({ class: 'has-notes', html: svg_notes() }));
   }
@@ -80,6 +85,7 @@ function openServiceForm() {
 
   serviceMileageInput.value = vehicle.currentMileage.toString();
   serviceDateInput.value = toYYYYMMDD(vehicle.currentMileageDate || new Date());
+  serviceCostInput.value = '';
   serviceNotesInput.value = '';
 
   setStateField('showServiceForm', true);
@@ -100,10 +106,13 @@ async function submitServiceForm(e) {
   const dateStr = formData.get('serviceDate')?.toString();
   const date = dateStr ? fromYYYYMMDD(dateStr) : new Date();
   const notes = formData.get('serviceNotes')?.toString() || '';
+  const costStr = formData.get('serviceCost')?.toString();
+  const cost = costStr ? Number(costStr) : null;
 
-  const result = await markItemServiced(item, mileage, date, notes);
+  const result = await markItemServiced(item, mileage, date, notes, cost);
   if (!result.data) { return _error(result.errorMsg); }
 
+  haptic();
   appendServiceHistoryRow(result.data, true);
   serviceForm.reset();
   setStateField('showServiceForm', false);

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { debug, log } from '../logger/logger.js';
 import { errorResponse } from './httpResponses.js';
+import { SECURITY_HEADERS } from './securityHeaders.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -68,7 +69,7 @@ function sendAssetFile(res, fileRoute, contentType) {
   const filePath = join(PUBLIC_DIR, ...fileRoute);
   fs.stat(filePath, (err, stat) => {
     if (err === null) {
-      res.writeHead(200, { 'content-type': contentType });
+      res.writeHead(200, { 'content-type': contentType, ...SECURITY_HEADERS });
       const stream = fs.createReadStream(filePath);
       stream.pipe(res);
       return;
@@ -76,11 +77,11 @@ function sendAssetFile(res, fileRoute, contentType) {
 
     if (err.code === 'ENOENT') {
       log('---File does not exist @sendAssetFile', filePath);
-      res.writeHead(404);
+      res.writeHead(404, SECURITY_HEADERS);
       res.end();
     } else {
       log('---Error @sendAssetFile', err);
-      res.writeHead(500);
+      res.writeHead(500, SECURITY_HEADERS);
       res.end();
     }
   });

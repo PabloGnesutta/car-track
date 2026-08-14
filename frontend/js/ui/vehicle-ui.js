@@ -3,8 +3,10 @@ import { _error } from "../lib/logger.js";
 import { pen_solid } from "../svg/svgFn.js";
 import { setAppBadge } from "../lib/badge.js";
 import { notifyDueItemsOnce } from "../lib/notifications.js";
+import { showConfirm } from "./confirm-ui.js";
 import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
 import { deleteVehicleMileageHistory } from "../local-db/mileage-db.js";
+import { deleteVehicleFuelHistory } from "../local-db/fuel-db.js";
 import { countItemsByStatus } from "../local-db/maintenance-db.js";
 import { deleteAllItemsForVehicle, fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenance-ui.js";
 import { dataState, dbStore, setStateField } from "../common/state.js";
@@ -111,7 +113,8 @@ async function submitVehicleForm(e) {
 async function deleteVehicleFromForm() {
   const vehicle = vehicleBeingEdited;
   if (!vehicle) { return; }
-  if (!confirm(`¿Seguro que querés borrar "${vehicle.name}" y todos sus ítems de mantenimiento?`)) { return; }
+  const confirmed = await showConfirm(`¿Seguro que querés borrar "${vehicle.name}" y todos sus ítems de mantenimiento?`, { danger: true });
+  if (!confirmed) { return; }
 
   const vehicleKey = vehicle._key;
   if (!vehicleKey) { return; }
@@ -122,9 +125,11 @@ async function deleteVehicleFromForm() {
 
   await deleteAllItemsForVehicle(vehicleKey);
   await deleteVehicleMileageHistory(vehicleKey);
+  await deleteVehicleFuelHistory(vehicleKey);
   await deleteVehicle(vehicleKey);
 
   delete dbStore.mileageHistory[vehicleKey.toString()];
+  delete dbStore.fuelHistory[vehicleKey.toString()];
   const idx = dbStore.vehicles.findIndex(v => v._key === vehicleKey);
   if (idx !== -1) { dbStore.vehicles.splice(idx, 1); }
 
