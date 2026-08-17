@@ -25,8 +25,10 @@ import { _log } from "../lib/logger.js";
  * @property {boolean} showFuelForm
  * @property {boolean} showFuelHistory
  * @property {Views} currentView
+ * @property {AuthStage} authStage
  *
  * @typedef {'MaintenanceList'|'SingleItem'} Views
+ * @typedef {'checking'|'login'|'ready'} AuthStage
  *
  * @typedef {object} DataState
  * @property {Vehicle|null} currentVehicle
@@ -60,6 +62,7 @@ const appState = {
     showFuelForm: false,
     showFuelHistory: false,
     currentView: 'MaintenanceList',
+    authStage: 'checking',
 };
 
 /**
@@ -99,11 +102,19 @@ function setStateField(field, value) {
 }
 
 /**
- * @param {Views} view 
+ * @param {Views} view
  */
 function setCurrentView(view) {
     appState.currentView = view;
     $app.dataset.currentView = view;
+}
+
+/**
+ * @param {AuthStage} stage
+ */
+function setAuthStage(stage) {
+    appState.authStage = stage;
+    $app.dataset.authStage = stage;
 }
 
 function initAppState() {
@@ -119,6 +130,7 @@ function initAppState() {
     setStateField('showFuelForm', false);
     setStateField('showFuelHistory', false);
     setCurrentView('MaintenanceList');
+    setAuthStage('checking');
 }
 
-export { appState, dataState, dbStore, initAppState, setStateField, setCurrentView };
+export { appState, dataState, dbStore, initAppState, setStateField, setCurrentView, setAuthStage };

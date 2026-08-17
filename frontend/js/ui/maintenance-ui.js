@@ -4,10 +4,8 @@ import { matches, normalize } from "../lib/string.js";
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { appState, dataState, dbStore, setCurrentView, setStateField } from "../common/state.js";
 import {
-  createMaintenanceItem, deleteMaintenanceItem, restoreMaintenanceItem, deleteMaintenanceItemsForVehicle,
-  fetchMaintenanceItems, updateMaintenanceItem,
+  createMaintenanceItem, deleteMaintenanceItem, fetchMaintenanceItems, updateMaintenanceItem,
 } from "../local-db/maintenance-db.js";
-import { deleteItemHistory, restoreServiceRecords } from "../local-db/service-db.js";
 import { computeStatus, formatDueDetail, formatRemindersBanner, statusBadgeHtml } from "../lib/maintenanceStatus.js";
 import { showUndoToast } from "../lib/toast.js";
 import { svg_check, svg_trash, svg_wrench } from "../svg/svgFn.js";
@@ -377,6 +375,12 @@ function closeSingleItem() {
   openMaintenanceList();
 }
 
+/**
+ * Deletes the current item. The actual API delete is deferred until the
+ * undo toast's window truly expires (see showUndoToast's onExpire) - until
+ * then nothing is persisted, so clicking "undo" is just restoring the local
+ * cache, no network call needed either way.
+ */
 async function tryDeleteItem() {
   const item = dataState.currentItem;
   const vehicle = dataState.currentVehicle;
@@ -384,12 +388,9 @@ async function tryDeleteItem() {
   const itemKey = item._key;
   if (!itemKey) { return; }
 
-  const historySnapshot = (dbStore.serviceHistory[itemKey.toString()] || []).slice();
+  const historySnapshot = dbStore.serviceHistory[itemKey.toString()];
 
   haptic();
-  await deleteMaintenanceItem(itemKey);
-  await deleteItemHistory(itemKey);
-
   closeSingleItem();
 
   const idx = dbStore.maintenanceItems.findIndex(i => i._key === itemKey);
@@ -399,24 +400,11 @@ async function tryDeleteItem() {
   dataState.currentItem = null;
   await fetchAndRenderMaintenanceItems(vehicle);
 
-  showUndoToast(`"${item.name}" eliminado`, async () => {
-    await restoreMaintenanceItem(item);
-    await restoreServiceRecords(historySnapshot);
-    dbStore.serviceHistory[itemKey.toString()] = historySnapshot;
-    await fetchAndRenderMaintenanceItems(vehicle);
-  });
-}
-
-/**
- * Deletes all maintenance items (and their service history) for a vehicle
- * that's about to be deleted.
- * @param {IDBValidKey} vehicleKey
- */
-async function deleteAllItemsForVehicle(vehicleKey) {
-  const itemKeys = await deleteMaintenanceItemsForVehicle(vehicleKey);
-  for (const itemKey of itemKeys) {
-    await deleteItemHistory(itemKey);
-  }
+  showUndoToast(`"${item.name}" eliminado`, () => {
+    dbStore.maintenanceItems.push(item);
+    if (historySnapshot) { dbStore.serviceHistory[itemKey.toString()] = historySnapshot; }
+    fetchAndRenderMaintenanceItems(vehicle);
+  }, { onExpire: () => deleteMaintenanceItem(itemKey) }); // server cascades its service history
 }
 
 /**
@@ -434,6 +422,6 @@ async function refreshAfterService(item) {
 
 export {
   fetchAndRenderMaintenanceItems, openMaintenanceList, openItemForm, submitItemForm,
-  openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService, deleteAllItemsForVehicle,
+  openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService,
   toggleSearch,
 };

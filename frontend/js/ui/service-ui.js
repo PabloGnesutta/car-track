@@ -1,7 +1,6 @@
 import { fromYYYYMMDD, timeAgo, toYYYYMMDD } from "../lib/date.js";
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
-import { putOne } from "../lib/indexedDb.js";
 import { dataState, dbStore, setStateField } from "../common/state.js";
 import { deleteServiceRecord, getServiceHistory, markItemServiced } from "../local-db/service-db.js";
 import { showUndoToast } from "../lib/toast.js";
@@ -121,6 +120,10 @@ async function submitServiceForm(e) {
 }
 
 /**
+ * Deletes a service record. The actual API delete (and the server's
+ * recompute of the parent item's last-service fields) is deferred until the
+ * undo toast's window truly expires - until then only the in-memory cache
+ * changes, so "undo" is a pure local restore with no network call.
  * @param {string} serviceKey
  * @param {string} itemKey
  */
@@ -128,34 +131,25 @@ async function tryDeleteServiceRecord(serviceKey, itemKey) {
   const strItemKey = itemKey;
   const history = dbStore.serviceHistory[strItemKey] || [];
   const key = +serviceKey;
-  const record = history.find(r => r._key === key);
-  if (!record) { return; }
-
-  // If the deleted record is the item's denormalized last-service, snapshot
-  // it so it can be restored on undo.
-  const item = dataState.currentItem;
-  const wasLastServiceRecord = !!(item && item._key && item._key.toString() === strItemKey && item.lastServiceRecord?._key === key);
-  const previousLastService = wasLastServiceRecord
-    ? { record: item.lastServiceRecord, mileage: item.lastServiceMileage, date: item.lastServiceDate }
-    : null;
-
-  await deleteServiceRecord(record);
-
   const idx = history.findIndex(r => r._key === key);
-  if (idx !== -1) { history.splice(idx, 1); }
+  if (idx === -1) { return; }
+  const [record] = history.splice(idx, 1);
 
   const row = $queryOne(`[data-service-key="${serviceKey}"]`);
   if (row) { row.remove(); }
 
-  // Fall back to the next most recent record (history is kept newest-first).
-  if (wasLastServiceRecord && item) {
+  // idx === 0 means this was the newest record (history is kept newest
+  // first) - i.e. the one the item's last-service fields currently reflect.
+  const item = dataState.currentItem;
+  const wasNewest = idx === 0 && !!item && item._key != null && item._key.toString() === strItemKey;
+  const previousLastService = wasNewest ? { mileage: item.lastServiceMileage, date: item.lastServiceDate } : null;
+
+  if (wasNewest && item) {
+    // Optimistic client-side recompute from what's left in the cache, for
+    // immediate UI feedback - nothing is persisted yet.
     const next = history[0] || null;
-    item.lastServiceRecord = next;
-    if (next) {
-      item.lastServiceMileage = next.mileage;
-      item.lastServiceDate = next.date;
-    }
-    await putOne('maintenanceItems', item, item._key);
+    item.lastServiceMileage = next ? next.mileage : null;
+    item.lastServiceDate = next ? next.date : null;
     await refreshAfterService(item);
   }
 
@@ -163,21 +157,26 @@ async function tryDeleteServiceRecord(serviceKey, itemKey) {
     historyList.innerHTML = 'No hay servicios registrados para este ítem';
   }
 
-  showUndoToast('Registro de servicio eliminado', async () => {
-    await putOne('serviceHistory', record, record._key);
-    history.unshift(record);
+  showUndoToast('Registro de servicio eliminado', () => {
+    history.splice(idx, 0, record);
 
-    if (wasLastServiceRecord && item && previousLastService) {
-      item.lastServiceRecord = previousLastService.record;
+    if (wasNewest && item && previousLastService) {
       item.lastServiceMileage = previousLastService.mileage;
       item.lastServiceDate = previousLastService.date;
-      await putOne('maintenanceItems', item, item._key);
-      await refreshAfterService(item);
+      refreshAfterService(item);
     }
 
-    if (dataState.currentItem && dataState.currentItem._key && dataState.currentItem._key.toString() === strItemKey) {
-      await populateServiceHistory(dataState.currentItem);
+    if (dataState.currentItem && dataState.currentItem._key != null && dataState.currentItem._key.toString() === strItemKey) {
+      populateServiceHistory(dataState.currentItem);
     }
+  }, {
+    onExpire: async () => {
+      const updatedItem = await deleteServiceRecord(record);
+      if (updatedItem && dataState.currentItem && dataState.currentItem._key === updatedItem._key) {
+        dataState.currentItem.lastServiceMileage = updatedItem.lastServiceMileage;
+        dataState.currentItem.lastServiceDate = updatedItem.lastServiceDate;
+      }
+    },
   });
 }
 

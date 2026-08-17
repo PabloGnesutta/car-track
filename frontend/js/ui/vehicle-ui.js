@@ -6,10 +6,8 @@ import { notifyDueItemsOnce } from "../lib/notifications.js";
 import { showConfirm } from "./confirm-ui.js";
 import { resetVoiceStatus } from "./voice-mileage-ui.js";
 import { createVehicle, deleteVehicle, resolveCurrentVehicle, setLastUsedVehicleKey, updateVehicle, logMileage } from "../local-db/vehicle-db.js";
-import { deleteVehicleMileageHistory } from "../local-db/mileage-db.js";
-import { deleteVehicleFuelHistory } from "../local-db/fuel-db.js";
-import { countItemsByStatus } from "../local-db/maintenance-db.js";
-import { deleteAllItemsForVehicle, fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenance-ui.js";
+import { countAllVehiclesStatus } from "../local-db/maintenance-db.js";
+import { fetchAndRenderMaintenanceItems, openMaintenanceList } from "./maintenance-ui.js";
 import { dataState, dbStore, setStateField } from "../common/state.js";
 
 
@@ -124,9 +122,8 @@ async function deleteVehicleFromForm() {
   vehicleForm.reset();
   setStateField('showVehicleForm', false);
 
-  await deleteAllItemsForVehicle(vehicleKey);
-  await deleteVehicleMileageHistory(vehicleKey);
-  await deleteVehicleFuelHistory(vehicleKey);
+  // Cascades (maintenance items, service/mileage/fuel history) server-side
+  // in one transaction - no client-orchestrated multi-call sequence needed.
   await deleteVehicle(vehicleKey);
 
   delete dbStore.mileageHistory[vehicleKey.toString()];
@@ -176,14 +173,18 @@ function updateMileageDisplay(vehicle) {
 async function renderVehicleChips() {
   chipsContainer.innerHTML = '';
   const currentKey = dataState.currentVehicle?._key;
-  const today = new Date();
   let totalUrgent = 0;
   /** @type {{ name: string, overdue: number, dueSoon: number }[]} */
   const vehicleSummaries = [];
 
+  // One request for every vehicle's status counts, instead of one request
+  // per vehicle - this renders on every list change, so N round trips would
+  // add up fast against a remote API (unlike the old free IndexedDB reads).
+  const statusCounts = await countAllVehiclesStatus(dbStore.vehicles);
+
   for (const vehicle of dbStore.vehicles) {
     const key = (vehicle._key || '').toString();
-    const { overdue, dueSoon } = await countItemsByStatus(vehicle._key || '', vehicle.currentMileage, today);
+    const { overdue, dueSoon } = statusCounts[key] || { overdue: 0, dueSoon: 0 };
     totalUrgent += overdue + dueSoon;
     vehicleSummaries.push({ name: vehicle.name, overdue, dueSoon });
 

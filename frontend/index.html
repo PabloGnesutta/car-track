@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="css/skeleton.css" />
   <link rel="stylesheet" href="css/confirm.css" />
   <link rel="stylesheet" href="css/analytics.css" />
+  <link rel="stylesheet" href="css/auth.css" />
 
   <script src="js/app.js" type="module" defer></script>
 </head>
@@ -48,6 +49,29 @@
 
   <!-- Application -->
   <div id="app">
+    <!-- Auth (login/signup) -->
+    <div id="authView" class="page">
+      <form id="authForm" class="base-form">
+        <h3 class="form-title"><span class="form-title-text">Iniciar Sesión</span></h3>
+        <div class="form-content">
+          <div id="authNameField" class="form-control display-none">
+            <label for="authName">Nombre</label>
+            <input type="text" name="authName" placeholder="Tu nombre" autocomplete="name" />
+          </div>
+          <div class="form-control">
+            <label for="authEmail">Email</label>
+            <input type="email" name="authEmail" placeholder="tu@email.com" autocomplete="email" />
+          </div>
+          <div class="form-control">
+            <label for="authPassword">Contraseña</label>
+            <input type="password" name="authPassword" placeholder="Contraseña" autocomplete="current-password" />
+          </div>
+          <div class="submit"><!--  --></div>
+          <button type="button" id="authModeToggle" class="mode-toggle">¿No tenés cuenta? Creá una</button>
+        </div>
+      </form>
+    </div>
+
     <header id="mainHeader">
       <div class="page-title"></div>
       <div id="goBack2" class="go-back"></div>

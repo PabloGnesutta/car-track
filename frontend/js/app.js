@@ -5,8 +5,8 @@ import { dbugBtns, initUi } from "./ui/ui.js";
 import { initAppState } from "./common/state.js";
 import { eventBus } from "./lib/utils.js";
 import { $ } from "./lib/dom.js";
-import { fetchVehicles, resolveCurrentVehicle } from "./local-db/vehicle-db.js";
-import { activateVehicle, openVehicleForm } from "./ui/vehicle-ui.js";
+import { bootApp } from "./appBoot.js";
+import { initAuthUi } from "./ui/auth-ui.js";
 import { seedDb } from "./local-db/seed.js";
 import { initBackupUi } from "./ui/backup-ui.js";
 import { initNotificationsUi } from "./ui/notifications-ui.js";
@@ -44,14 +44,7 @@ eventBus.on('IndexedDbInited', async ({ version }) => {
     $('cacheMajorVersion').innerText = localStorage.getItem('cacheMajorVersion') || '';
     $('indexedDbVersion').innerText = version;
 
-    const vehicles = await fetchVehicles();
-    const currentVehicle = resolveCurrentVehicle(vehicles);
-
-    if (!currentVehicle) {
-        openVehicleForm(true);
-    } else {
-        await activateVehicle(currentVehicle);
-    }
+    await bootApp();
 
     hideLoadingSkeleton();
 });
@@ -59,6 +52,7 @@ eventBus.on('IndexedDbInited', async ({ version }) => {
 initAppState();
 initUi();
 dbugBtns();
+initAuthUi($('mainFooter'));
 initBackupUi($('mainFooter'));
 initNotificationsUi($('mainFooter'));
 initVoiceMileageUi();

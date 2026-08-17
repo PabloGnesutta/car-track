@@ -4,6 +4,7 @@ import { TEST_PORT } from './tests/testPort.js';
 export default defineConfig({
   testDir: './tests/e2e',
   globalSetup: './tests/e2e/global-setup.js',
+  globalTeardown: './tests/e2e/global-teardown.js',
   fullyParallel: true,
   // The backend is a minimal hand-rolled static file server (no framework,
   // no caching) — a large burst of concurrent requests right as it comes up

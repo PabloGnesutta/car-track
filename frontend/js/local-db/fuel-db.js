@@ -1,5 +1,5 @@
 import { dbStore } from "../common/state.js";
-import { deleteMany, getAllWithIndex, putOne } from "../lib/indexedDb.js";
+import { apiCall } from "../api-caller/apiCaller.js";
 
 
 /**
@@ -14,20 +14,38 @@ import { deleteMany, getAllWithIndex, putOne } from "../lib/indexedDb.js";
  * lib/fuelEconomy.js), without needing a "was this a full tank" toggle in
  * the UI.
  * @typedef {object} FuelRecord
- * @property {IDBValidKey} vehicleKey
+ * @property {number} vehicleKey
  * @property {number} mileage
  * @property {number} liters
  * @property {number|null} [cost]
  * @property {Date} date
  * @property {string} [notes]
- * @property {IDBValidKey} [_key]
+ * @property {number} [_key]
  * @property {Date} [createdAt]
  */
 
 
 /**
- * Records a fuel fill-up.
- * @param {IDBValidKey} vehicleKey
+ * @param {*} data - the `data` field of a fuelHistory/* API response
+ * @returns {FuelRecord}
+ */
+function recordFromApi(data) {
+  return {
+    _key: data.id,
+    vehicleKey: data.vehicleId,
+    mileage: data.mileage,
+    liters: data.liters,
+    cost: data.cost,
+    notes: data.notes || '',
+    date: new Date(data.date),
+    createdAt: new Date(data.createdAt),
+  };
+}
+
+/**
+ * Records a fuel fill-up. No delete - this app never had a per-record fuel
+ * delete, only a vehicle-delete cascade.
+ * @param {number} vehicleKey
  * @param {number} mileage
  * @param {number} liters
  * @param {Date} date
@@ -36,13 +54,10 @@ import { deleteMany, getAllWithIndex, putOne } from "../lib/indexedDb.js";
  * @returns {ServiceReturn<FuelRecord>}
  */
 async function addFuelRecord(vehicleKey, mileage, liters, date, cost = null, notes = '') {
-  if (!Number.isFinite(mileage) || mileage < 0) { return { errorMsg: 'Ingresar un kilometraje válido' }; }
-  if (!Number.isFinite(liters) || liters <= 0) { return { errorMsg: 'Ingresar una cantidad de litros válida' }; }
+  const result = await apiCall('fuelHistory/create', { vehicleId: vehicleKey, mileage, liters, date: date.getTime(), cost, notes });
+  if (!result.data) { return { errorMsg: result.error }; }
 
-  /** @type {FuelRecord} */
-  const record = { vehicleKey, mileage, liters, cost, notes, date, createdAt: new Date() };
-  record._key = await putOne('fuelHistory', record);
-
+  const record = recordFromApi(result.data);
   const strVehicleKey = vehicleKey.toString();
   let history = dbStore.fuelHistory[strVehicleKey];
   if (!history) {
@@ -57,7 +72,7 @@ async function addFuelRecord(vehicleKey, mileage, liters, date, cost = null, not
 /**
  * Returns the fuel history for the given vehicle, newest first.
  * If cached, returns the cache, otherwise fetches and caches.
- * @param {IDBValidKey} vehicleKey
+ * @param {number} vehicleKey
  * @returns {Promise<FuelRecord[]>}
  */
 async function getFuelHistory(vehicleKey) {
@@ -66,20 +81,11 @@ async function getFuelHistory(vehicleKey) {
     return dbStore.fuelHistory[strVehicleKey];
   }
 
-  /** @type {FuelRecord[]} */ // @ts-ignore
-  const history = await getAllWithIndex('fuelHistory', 'vehicleKey', vehicleKey);
+  const result = await apiCall('fuelHistory/fetch', { vehicleId: vehicleKey });
+  const history = (result.data || []).map(recordFromApi);
   dbStore.fuelHistory[strVehicleKey] = history;
   return history;
 }
 
-/**
- * Deletes all fuel history for the given vehicle.
- * @param {IDBValidKey} vehicleKey
- * @returns {Promise<boolean>}
- */
-async function deleteVehicleFuelHistory(vehicleKey) {
-  return deleteMany('fuelHistory', 'vehicleKey', vehicleKey);
-}
 
-
-export { addFuelRecord, getFuelHistory, deleteVehicleFuelHistory };
+export { addFuelRecord, getFuelHistory, recordFromApi as fuelRecordFromApi };

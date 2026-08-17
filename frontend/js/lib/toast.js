@@ -16,9 +16,12 @@ let currentHandler = null;
  * action stays committed, matching how most undo-toasts behave).
  * @param {string} message
  * @param {() => void} onUndo
- * @param {number} [durationMs]
+ * @param {{durationMs?: number, onExpire?: () => void}} [options] - `onExpire`
+ *   fires once the window elapses without an undo click - used to defer an
+ *   actual persistence call (e.g. an API delete) until the undo window is
+ *   truly gone, so undo itself never needs to touch the network.
  */
-function showUndoToast(message, onUndo, durationMs = 5000) {
+function showUndoToast(message, onUndo, { durationMs = 5000, onExpire } = {}) {
   clearTimeout(hideTimeout);
   if (currentHandler) {
     undoBtn.removeEventListener('click', currentHandler);
@@ -40,6 +43,7 @@ function showUndoToast(message, onUndo, durationMs = 5000) {
     undoBtn.removeEventListener('click', /** @type {() => void} */(currentHandler));
     currentHandler = null;
     fold(toastEl);
+    onExpire?.();
   }, durationMs);
 }
 

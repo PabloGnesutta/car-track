@@ -1,58 +1,44 @@
 import { dbStore } from "../common/state.js";
-import { deleteMany, getAllWithIndex, putOne } from "../lib/indexedDb.js";
+import { apiCall } from "../api-caller/apiCaller.js";
 
 
 /**
  * Mileage History Record - DB Model
  * @typedef {object} MileageHistoryRecord
- * @property {IDBValidKey} vehicleKey
+ * @property {number} vehicleKey
  * @property {number} mileage
  * @property {number} previousMileage
  * @property {number} distance
  * @property {Date} date
  * @property {string} [notes]
- * @property {IDBValidKey} [_key]
+ * @property {number} [_key]
  * @property {Date} [createdAt]
  */
 
 
 /**
- * Records a new odometer reading in the vehicle's mileage history.
- * @param {IDBValidKey} vehicleKey
- * @param {number} mileage
- * @param {number} previousMileage
- * @param {Date} date
- * @param {string} [notes]
- * @returns {Promise<MileageHistoryRecord>}
+ * @param {*} data - the `data` field of a mileageHistory/* API response
+ * @returns {MileageHistoryRecord}
  */
-async function addMileageHistoryRecord(vehicleKey, mileage, previousMileage, date, notes = '') {
-  /** @type {MileageHistoryRecord} */
-  const record = {
-    vehicleKey,
-    mileage,
-    previousMileage,
-    distance: mileage - previousMileage,
-    date,
-    notes,
-    createdAt: new Date(),
+function recordFromApi(data) {
+  return {
+    _key: data.id,
+    vehicleKey: data.vehicleId,
+    mileage: data.mileage,
+    previousMileage: data.previousMileage,
+    distance: data.distance,
+    date: new Date(data.date),
+    notes: data.notes || '',
+    createdAt: new Date(data.createdAt),
   };
-  record._key = await putOne('mileageHistory', record);
-
-  const strVehicleKey = vehicleKey.toString();
-  let history = dbStore.mileageHistory[strVehicleKey];
-  if (!history) {
-    history = [];
-    dbStore.mileageHistory[strVehicleKey] = history;
-  }
-  history.unshift(record);
-
-  return record;
 }
 
 /**
  * Returns the mileage history for the given vehicle, newest first.
- * If cached, returns the cache, otherwise fetches and caches.
- * @param {IDBValidKey} vehicleKey
+ * If cached, returns the cache, otherwise fetches and caches. Writes happen
+ * via vehicle-db.js's logMileage(), which also updates the vehicle's
+ * current mileage in the same server-side transaction.
+ * @param {number} vehicleKey
  * @returns {Promise<MileageHistoryRecord[]>}
  */
 async function getMileageHistory(vehicleKey) {
@@ -61,21 +47,11 @@ async function getMileageHistory(vehicleKey) {
     return dbStore.mileageHistory[strVehicleKey];
   }
 
-  /** @type {MileageHistoryRecord[]} */ // @ts-ignore
-  const history = await getAllWithIndex('mileageHistory', 'vehicleKey', vehicleKey);
+  const result = await apiCall('mileageHistory/fetch', { vehicleId: vehicleKey });
+  const history = (result.data || []).map(recordFromApi);
   dbStore.mileageHistory[strVehicleKey] = history;
   return history;
 }
 
 
-/**
- * Deletes all mileage history for the given vehicle.
- * @param {IDBValidKey} vehicleKey
- * @returns {Promise<boolean>}
- */
-async function deleteVehicleMileageHistory(vehicleKey) {
-  return deleteMany('mileageHistory', 'vehicleKey', vehicleKey);
-}
-
-
-export { addMileageHistoryRecord, getMileageHistory, deleteVehicleMileageHistory };
+export { getMileageHistory, recordFromApi as mileageRecordFromApi };

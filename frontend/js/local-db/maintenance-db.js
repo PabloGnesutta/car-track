@@ -2,7 +2,7 @@ import { dbStore } from "../common/state.js";
 import { normalize } from "../lib/string.js";
 import { clearArray } from "../lib/utils.js";
 import { computeStatus } from "../lib/maintenanceStatus.js";
-import { deleteMany, deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb.js";
+import { apiCall } from "../api-caller/apiCaller.js";
 
 
 /**
@@ -11,22 +11,20 @@ import { deleteMany, deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb
  */
 
 /**
- * @typedef {import("../lib/indexedDb.js").StoreKey} StoreKey
  * @typedef {import("./service-db.js").ServiceRecord} ServiceRecord
  */
 
 /**
  * @typedef {object} MaintenanceItem
- * @property {IDBValidKey} vehicleKey
+ * @property {number} vehicleKey
  * @property {string} name
  * @property {string} [normalizedName]
  * @property {number|null} intervalKm
  * @property {number|null} intervalDays
- * @property {number} lastServiceMileage
- * @property {Date} lastServiceDate
- * @property {ServiceRecord|null} lastServiceRecord
+ * @property {number|null} lastServiceMileage
+ * @property {Date|null} lastServiceDate
  * @property {string} [notes]
- * @property {IDBValidKey} [_key]
+ * @property {number} [_key]
  * @property {Date} [createdAt]
  * @property {Date} [updatedAt]
  */
@@ -42,36 +40,52 @@ import { deleteMany, deleteOne, getAllWithIndex, putOne } from "../lib/indexedDb
 
 
 /**
+ * @param {*} data - the `data` field of a maintenanceItems/* API response
+ * @returns {MaintenanceItem}
+ */
+function itemFromApi(data) {
+  return {
+    _key: data.id,
+    vehicleKey: data.vehicleId,
+    name: data.name,
+    normalizedName: data.normalizedName,
+    intervalKm: data.intervalKm,
+    intervalDays: data.intervalDays,
+    lastServiceMileage: data.lastServiceMileage,
+    lastServiceDate: data.lastServiceDate != null ? new Date(data.lastServiceDate) : null,
+    notes: data.notes || '',
+    createdAt: new Date(data.createdAt),
+    updatedAt: new Date(data.updatedAt),
+  };
+}
+
+/**
  * Creates a maintenance item for the given vehicle.
- * @param {IDBValidKey} vehicleKey
+ * @param {number} vehicleKey
  * @param {string} name
  * @param {MaintenanceItemInput} data
- * @param {Date} [date]
  * @returns {ServiceReturn<MaintenanceItem>}
  */
-async function createMaintenanceItem(vehicleKey, name, data, date = new Date()) {
+async function createMaintenanceItem(vehicleKey, name, data) {
   name = name.trim();
   if (!name) { return { errorMsg: 'Ingresar nombre' }; }
   if (!data.intervalKm && !data.intervalDays) {
     return { errorMsg: 'Ingresar un intervalo en km o en días' };
   }
 
-  /** @type {MaintenanceItem} */
-  const item = {
-    vehicleKey,
+  const result = await apiCall('maintenanceItems/create', {
+    vehicleId: vehicleKey,
     name,
     normalizedName: normalize(name),
     intervalKm: data.intervalKm || null,
     intervalDays: data.intervalDays || null,
     lastServiceMileage: data.lastServiceMileage,
-    lastServiceDate: data.lastServiceDate,
-    lastServiceRecord: null,
+    lastServiceDate: data.lastServiceDate.getTime(),
     notes: data.notes || '',
-    createdAt: date,
-    updatedAt: date,
-  };
-  item._key = await putOne('maintenanceItems', item);
+  });
+  if (!result.data) { return { errorMsg: result.error }; }
 
+  const item = itemFromApi(result.data);
   dbStore.maintenanceItems.push(item);
   return { data: item };
 }
@@ -80,74 +94,45 @@ async function createMaintenanceItem(vehicleKey, name, data, date = new Date()) 
  * Updates a maintenance item's editable fields. Mutates the given item.
  * @param {MaintenanceItem} item
  * @param {{name?: string, intervalKm?: number|null, intervalDays?: number|null, notes?: string}} data
- * @param {Date} [date]
  * @returns {ServiceReturn<MaintenanceItem>}
  */
-async function updateMaintenanceItem(item, data, date = new Date()) {
+async function updateMaintenanceItem(item, data) {
   if (!item._key) { return { errorMsg: 'Llave no provista' }; }
-  if (data.name) {
-    item.name = data.name;
-    item.normalizedName = normalize(data.name);
-  }
-  if ('intervalKm' in data) { item.intervalKm = data.intervalKm || null; }
-  if ('intervalDays' in data) { item.intervalDays = data.intervalDays || null; }
-  if ('notes' in data) { item.notes = data.notes || ''; }
-  if (!item.intervalKm && !item.intervalDays) {
-    return { errorMsg: 'Ingresar un intervalo en km o en días' };
-  }
-  item.updatedAt = date;
 
-  await putOne('maintenanceItems', item, item._key);
+  const payload = { itemId: item._key };
+  if (data.name) { payload.name = data.name; payload.normalizedName = normalize(data.name); }
+  if ('intervalKm' in data) { payload.intervalKm = data.intervalKm || null; }
+  if ('intervalDays' in data) { payload.intervalDays = data.intervalDays || null; }
+  if ('notes' in data) { payload.notes = data.notes || ''; }
+
+  const result = await apiCall('maintenanceItems/update', payload);
+  if (!result.data) { return { errorMsg: result.error }; }
+
+  const updated = itemFromApi(result.data);
+  Object.assign(item, updated);
   return { data: item };
 }
 
 /**
- * @param {StoreKey} itemKey
- * @returns {Promise<StoreKey>}
+ * @param {number} itemKey
+ * @returns {Promise<boolean>}
  */
 async function deleteMaintenanceItem(itemKey) {
-  return deleteOne('maintenanceItems', itemKey);
-}
-
-/**
- * Re-inserts a previously deleted maintenance item under its original key.
- * Used to support "undo" right after a delete action.
- * @param {MaintenanceItem} item
- * @returns {ServiceReturn<MaintenanceItem>}
- */
-async function restoreMaintenanceItem(item) {
-  if (!item._key) { return { errorMsg: 'Ítem sin llave' }; }
-  await putOne('maintenanceItems', item, item._key);
-  dbStore.maintenanceItems.push(item);
-  return { data: item };
-}
-
-/**
- * Deletes all maintenance items for the given vehicle (used when the vehicle
- * itself is deleted). Returns the deleted items' keys so their service
- * history can be cleaned up too.
- * @param {IDBValidKey} vehicleKey
- * @returns {Promise<IDBValidKey[]>}
- */
-async function deleteMaintenanceItemsForVehicle(vehicleKey) {
-  /** @type {MaintenanceItem[]} */ // @ts-ignore
-  const items = await getAllWithIndex('maintenanceItems', 'vehicleKey', vehicleKey);
-  const keys = /** @type {IDBValidKey[]} */ (items.map(i => i._key).filter(k => k != null));
-  await deleteMany('maintenanceItems', 'vehicleKey', vehicleKey);
-  return keys;
+  const result = await apiCall('maintenanceItems/delete', { itemId: itemKey });
+  return !!result.data;
 }
 
 /**
  * Fetch all maintenance items for the given vehicle, sorted by urgency
  * (overdue -> due-soon -> ok) then name. Stores them in dbStore.
- * @param {IDBValidKey} vehicleKey
+ * @param {number} vehicleKey
  * @param {number} currentMileage
  * @param {Date} currentDate
  * @returns {Promise<MaintenanceItem[]>}
  */
 async function fetchMaintenanceItems(vehicleKey, currentMileage, currentDate) {
-  /** @type {MaintenanceItem[]} */ // @ts-ignore
-  const items = await getAllWithIndex('maintenanceItems', 'vehicleKey', vehicleKey);
+  const result = await apiCall('maintenanceItems/fetch', { vehicleId: vehicleKey });
+  const items = (result.data || []).map(itemFromApi);
 
   /** @type {Record<import("../lib/maintenanceStatus.js").MaintenanceStatus, number>} */
   const urgency = { overdue: 0, 'due-soon': 1, ok: 2 };
@@ -164,29 +149,44 @@ async function fetchMaintenanceItems(vehicleKey, currentMileage, currentDate) {
 }
 
 /**
- * Counts overdue/due-soon items for the given vehicle, independent of
- * dbStore's cache (which only holds the currently active vehicle's items).
- * Used for the vehicle chip row's badges.
- * @param {IDBValidKey} vehicleKey
- * @param {number} currentMileage
- * @param {Date} currentDate
- * @returns {Promise<{overdue: number, dueSoon: number}>}
+ * Every maintenance item across every one of the user's vehicles, in one
+ * request - used by renderVehicleChips() to compute overdue/due-soon counts
+ * per vehicle without issuing one API call per vehicle.
+ * @returns {Promise<MaintenanceItem[]>}
  */
-async function countItemsByStatus(vehicleKey, currentMileage, currentDate) {
-  /** @type {MaintenanceItem[]} */ // @ts-ignore
-  const items = await getAllWithIndex('maintenanceItems', 'vehicleKey', vehicleKey);
-  let overdue = 0;
-  let dueSoon = 0;
-  items.forEach(item => {
-    const { status } = computeStatus(item, currentMileage, currentDate);
-    if (status === 'overdue') { overdue++; }
-    else if (status === 'due-soon') { dueSoon++; }
-  });
-  return { overdue, dueSoon };
+async function fetchAllMaintenanceItems() {
+  const result = await apiCall('maintenanceItems/fetchAllForStatus', {});
+  return (result.data || []).map(itemFromApi);
+}
+
+/**
+ * Counts overdue/due-soon items for every vehicle in one round trip. Each
+ * vehicle's own currentMileage/currentMileageDate is used to compute its
+ * items' statuses.
+ * @param {import("./vehicle-db.js").Vehicle[]} vehicles
+ * @returns {Promise<Record<string, {overdue: number, dueSoon: number}>>}
+ */
+async function countAllVehiclesStatus(vehicles) {
+  const items = await fetchAllMaintenanceItems();
+  const today = new Date();
+  /** @type {Record<string, {overdue: number, dueSoon: number}>} */
+  const counts = {};
+  for (const vehicle of vehicles) {
+    counts[(vehicle._key || '').toString()] = { overdue: 0, dueSoon: 0 };
+  }
+  for (const item of items) {
+    const vehicle = vehicles.find(v => v._key === item.vehicleKey);
+    if (!vehicle) { continue; }
+    const key = (vehicle._key || '').toString();
+    const { status } = computeStatus(item, vehicle.currentMileage, vehicle.currentMileageDate || today);
+    if (status === 'overdue') { counts[key].overdue++; }
+    else if (status === 'due-soon') { counts[key].dueSoon++; }
+  }
+  return counts;
 }
 
 
 export {
-  createMaintenanceItem, updateMaintenanceItem, deleteMaintenanceItem, restoreMaintenanceItem, deleteMaintenanceItemsForVehicle,
-  fetchMaintenanceItems, countItemsByStatus,
+  createMaintenanceItem, updateMaintenanceItem, deleteMaintenanceItem,
+  fetchMaintenanceItems, countAllVehiclesStatus, itemFromApi,
 };

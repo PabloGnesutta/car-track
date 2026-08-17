@@ -12,3 +12,13 @@ export function errorResponse(res, msg, status = 400) {
   res.writeHead(status, { 'content-type': 'application/json', ...SECURITY_HEADERS });
   return res.end(JSON.stringify({ error: msg }));
 }
+
+/**
+ * @param {import('./types').ApiResponse} res
+ * @param {*} data
+ * @param {number} [status=200] - Default 200
+ */
+export function successResponse(res, data, status = 200) {
+  res.writeHead(status, { 'content-type': 'application/json', ...SECURITY_HEADERS });
+  return res.end(JSON.stringify({ data }));
+}

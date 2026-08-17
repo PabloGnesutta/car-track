@@ -105,7 +105,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 #mileageForm .submit .btn,
 #itemForm .submit .btn,
 #serviceForm .submit .btn,
-#fuelForm .submit .btn {
+#fuelForm .submit .btn,
+#authForm .submit .btn {
   background-color: var(--accent-strong);
   padding: 2rem;
   font-size: 22px;

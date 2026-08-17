@@ -1,0 +1,44 @@
+/* Auth gate: shown while logged out, hides the rest of the app while any
+   non-"ready" auth stage is active (checking session / showing the login
+   form). #authView itself lives outside .views so it's independent of the
+   MaintenanceList/SingleItem page-switching machinery. */
+
+#authView {
+  display: none;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+#app[data-auth-stage='login'] #authView {
+  display: flex;
+}
+
+#app:not([data-auth-stage='ready']) #mainHeader,
+#app:not([data-auth-stage='ready']) .views,
+#app:not([data-auth-stage='ready']) #mainFooter {
+  display: none;
+}
+
+#authForm {
+  width: 100%;
+  max-width: 360px;
+}
+
+.mode-toggle {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+#mainFooter .logout-btn {
+  margin-inline-start: auto;
+}

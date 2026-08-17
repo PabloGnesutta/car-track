@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { gotoApp, createFirstVehicle } from './helpers.js';
+import { gotoApp, ensureAuth, createFirstVehicle } from './helpers.js';
 
 test('first launch opens the onboarding vehicle form and blocks dismissal', async ({ page }) => {
   await gotoApp(page);
+  await ensureAuth(page);
   await expect(page.locator('#app')).toHaveAttribute('data-onboarding', 'true');
   await expect(page.locator('input[name="vehicleName"]')).toBeVisible();
 });
