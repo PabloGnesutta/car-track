@@ -134,7 +134,7 @@ function updateRemindersBanner(overdueCount, dueSoonCount) {
 /** Open the maintenance list view */
 function openMaintenanceList() {
   setCurrentView('MaintenanceList');
-  pageTitle.innerText = 'Principal (TEST)';
+  pageTitle.innerText = 'Principal';
 }
 
 /**
