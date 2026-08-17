@@ -3,7 +3,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = join(__dirname, '../../../backend/data/cartrack.db');
+// Matches DB_NAME in playwright.config.js's webServer.env - the e2e suite's
+// own database file, isolated from whatever a manually-run dev server uses.
+const DB_PATH = join(__dirname, '../../../backend/data/cartrack.test.db');
 
 /**
  * Sweeps every e2e-created account (and its data) out of the backend's

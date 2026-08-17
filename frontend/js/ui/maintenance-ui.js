@@ -87,6 +87,18 @@ function toggleSearch() {
  */
 async function fetchAndRenderMaintenanceItems(vehicle) {
   const items = await fetchMaintenanceItems(vehicle._key || '', vehicle.currentMileage, vehicle.currentMileageDate);
+  await renderMaintenanceItems(items, vehicle);
+}
+
+/**
+ * Renders the given items (already fetched/sorted) without hitting the API -
+ * used for optimistic local updates (e.g. right after a deferred delete,
+ * see tryDeleteItem) where a fresh fetch would still return the
+ * not-yet-actually-deleted server state and clobber the local change.
+ * @param {MaintenanceItem[]} items
+ * @param {Vehicle} vehicle
+ */
+async function renderMaintenanceItems(items, vehicle) {
   itemList.innerHTML = '';
   if (!items.length) {
     itemList.append($new({
@@ -398,18 +410,25 @@ async function tryDeleteItem() {
   delete dbStore.serviceHistory[itemKey.toString()];
 
   dataState.currentItem = null;
-  await fetchAndRenderMaintenanceItems(vehicle);
+  // Render from the already-updated cache, not a fresh fetch - the server
+  // hasn't actually deleted anything yet (that's deferred to onExpire
+  // below), so fetching now would just return the item again and undo this.
+  await renderMaintenanceItems(dbStore.maintenanceItems, vehicle);
 
   showUndoToast(`"${item.name}" eliminado`, () => {
     dbStore.maintenanceItems.push(item);
     if (historySnapshot) { dbStore.serviceHistory[itemKey.toString()] = historySnapshot; }
+    // Nothing was ever deleted server-side, so a real fetch is safe here and
+    // gets the undone item back into its correctly-sorted position.
     fetchAndRenderMaintenanceItems(vehicle);
   }, { onExpire: () => deleteMaintenanceItem(itemKey) }); // server cascades its service history
 }
 
 /**
  * Called after a service is marked done: refreshes the single-item view
- * and the list (order/badges depend on the newly-computed status).
+ * and the list (order/badges depend on the newly-computed status). Fetches
+ * fresh from the server - only correct to call when a server-side change
+ * has actually already happened (e.g. right after markItemServiced).
  * @param {MaintenanceItem} item
  */
 async function refreshAfterService(item) {
@@ -419,9 +438,24 @@ async function refreshAfterService(item) {
   await fetchAndRenderMaintenanceItems(vehicle);
 }
 
+/**
+ * Same as refreshAfterService, but renders from the in-memory cache instead
+ * of re-fetching - for callers where nothing has actually changed
+ * server-side yet (a deferred delete's optimistic update, or undoing one),
+ * where a fetch would just return the stale/unchanged server state and
+ * clobber the local update.
+ * @param {MaintenanceItem} item
+ */
+async function refreshAfterServiceLocal(item) {
+  const vehicle = dataState.currentVehicle;
+  if (!vehicle) { return; }
+  renderItemDetail(item, vehicle);
+  await renderMaintenanceItems(dbStore.maintenanceItems, vehicle);
+}
+
 
 export {
-  fetchAndRenderMaintenanceItems, openMaintenanceList, openItemForm, submitItemForm,
-  openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService,
+  fetchAndRenderMaintenanceItems, renderMaintenanceItems, openMaintenanceList, openItemForm, submitItemForm,
+  openSingleItem, closeSingleItem, tryDeleteItem, submitItemBtn, refreshAfterService, refreshAfterServiceLocal,
   toggleSearch,
 };

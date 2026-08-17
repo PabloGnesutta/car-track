@@ -5,7 +5,9 @@ import { dirname, join } from 'node:path';
 import { addAllowedEmail } from '../../../backend/src/db/allowedEmails.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = join(__dirname, '../../../backend/data/cartrack.db');
+// Matches DB_NAME in playwright.config.js's webServer.env - the e2e suite's
+// own database file, isolated from whatever a manually-run dev server uses.
+const DB_PATH = join(__dirname, '../../../backend/data/cartrack.test.db');
 
 /**
  * Whitelists a test email so the backend's signup allow-list doesn't reject

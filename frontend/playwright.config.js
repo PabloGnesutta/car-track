@@ -24,5 +24,13 @@ export default defineConfig({
     url: `http://localhost:${TEST_PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 30000,
+    // Isolates the e2e backend from a manually-run dev server: its own
+    // port (so Playwright never mistakes/reuses a dev server for its test
+    // server) and its own sqlite file (so wiping it for a clean test run
+    // can never touch real local dev data). See tests/testPort.js.
+    env: {
+      PORT: TEST_PORT,
+      DB_NAME: 'cartrack.test.db',
+    },
   },
 });

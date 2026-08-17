@@ -90,3 +90,30 @@ test('opening a single item shows its detail view', async ({ page }) => {
   await expect(page.locator('#singleItemView .name')).toHaveText('Cambio de aceite');
   await expect(page.locator('#singleItemView .status-badge')).toHaveText('Al día');
 });
+
+test('deleting a maintenance item removes it from the list immediately, without a reload', async ({ page }) => {
+  await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
+  await page.click('.row[data-item-key]');
+  await expect(page.locator('#singleItemView .name')).toHaveText('Cambio de aceite');
+
+  await page.click('#singleItemView .delete-btn');
+
+  // The actual server delete is deferred behind the undo toast - the list
+  // must still reflect the deletion right away, not just after the toast
+  // expires or the page reloads.
+  await expect(page.locator('#maintenanceListView')).toBeVisible();
+  await expect(page.locator('.row[data-item-key]')).toHaveCount(0);
+  await expect(page.locator('#maintenanceListView .list .empty-state')).toBeVisible();
+});
+
+test('clicking undo right after deleting a maintenance item restores it without a reload', async ({ page }) => {
+  await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
+  await page.click('.row[data-item-key]');
+  await page.click('#singleItemView .delete-btn');
+  await expect(page.locator('.row[data-item-key]')).toHaveCount(0);
+
+  await page.click('#undoBtn');
+
+  await expect(page.locator('.row[data-item-key]')).toHaveCount(1);
+  await expect(page.locator('.row .itemName')).toHaveText('Cambio de aceite');
+});

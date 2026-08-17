@@ -1,26 +1,14 @@
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
 /**
- * Reads PORT from backend/.env so the e2e harness always targets whatever
- * port the backend actually serves on, instead of a hardcoded port that can
- * silently drift out of sync with it (as happened before this file existed
- * — playwright.config.js pointed at :4000 while backend/.env said :3000,
- * so e2e runs would time out after 30s unless you knew to override PORT).
- * @returns {string}
+ * Fixed port dedicated to the e2e suite's own backend instance, deliberately
+ * decoupled from whatever PORT is in backend/.env (used by `npm run serve`
+ * for manual dev). playwright.config.js passes this to the webServer it
+ * spawns via `env: { PORT: ... }`, so the e2e backend always listens here
+ * regardless of .env - this used to read PORT from backend/.env instead,
+ * which meant e2e runs and a manually-running dev server were the same
+ * process on the same port talking to the same database file. Resetting the
+ * database for a clean e2e run (or Playwright's `reuseExistingServer`
+ * picking up "whatever's already listening") could then wipe or hijack real
+ * local dev data. Pick a different value here if this one ever collides
+ * with something else on your machine.
  */
-function readBackendPort() {
-  try {
-    const envContent = fs.readFileSync(join(__dirname, '../../backend/.env'), 'utf-8');
-    const match = envContent.match(/^PORT=(\d+)/m);
-    return match ? match[1] : '3000';
-  } catch {
-    return '3000';
-  }
-}
-
-export const TEST_PORT = readBackendPort();
+export const TEST_PORT = '3999';

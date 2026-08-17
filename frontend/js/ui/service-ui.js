@@ -6,7 +6,7 @@ import { deleteServiceRecord, getServiceHistory, markItemServiced } from "../loc
 import { showUndoToast } from "../lib/toast.js";
 import { svg_notes, svg_trash } from "../svg/svgFn.js";
 import { haptic } from "../lib/haptics.js";
-import { refreshAfterService } from "./maintenance-ui.js";
+import { refreshAfterService, refreshAfterServiceLocal } from "./maintenance-ui.js";
 
 
 /**
@@ -150,7 +150,7 @@ async function tryDeleteServiceRecord(serviceKey, itemKey) {
     const next = history[0] || null;
     item.lastServiceMileage = next ? next.mileage : null;
     item.lastServiceDate = next ? next.date : null;
-    await refreshAfterService(item);
+    await refreshAfterServiceLocal(item);
   }
 
   if (!history.length) {
@@ -163,7 +163,7 @@ async function tryDeleteServiceRecord(serviceKey, itemKey) {
     if (wasNewest && item && previousLastService) {
       item.lastServiceMileage = previousLastService.mileage;
       item.lastServiceDate = previousLastService.date;
-      refreshAfterService(item);
+      refreshAfterServiceLocal(item);
     }
 
     if (dataState.currentItem && dataState.currentItem._key != null && dataState.currentItem._key.toString() === strItemKey) {
