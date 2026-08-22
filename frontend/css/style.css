@@ -62,10 +62,6 @@
   --log-error: #7a0d0d;
 }
 
-html {
-  overscroll-behavior-y: contain;
-}
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background-color: var(--surface-0);
