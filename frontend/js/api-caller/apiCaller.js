@@ -35,6 +35,11 @@ function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
 }
 
+/** @returns {string|null} */
+function getUserEmail() {
+  return localStorage.getItem(USER_EMAIL_KEY);
+}
+
 /** @returns {boolean} */
 function isLoggedIn() {
   return !!getAccessToken();
@@ -99,4 +104,4 @@ async function apiLogout() {
 }
 
 
-export { apiCall, apiSignup, apiLogin, apiLogout, isLoggedIn, getAccessToken, clearSession };
+export { apiCall, apiSignup, apiLogin, apiLogout, isLoggedIn, getAccessToken, getUserEmail, clearSession };

@@ -181,6 +181,14 @@ svg {
   color: var(--accent);
 }
 
+.header-menu-email {
+  padding: 0.5rem 1rem 0.75rem;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--surface-3);
+  word-break: break-all;
+}
+
 .views {
   position: relative;
   overflow: hidden;

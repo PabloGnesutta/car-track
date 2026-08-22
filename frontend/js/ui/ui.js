@@ -1,6 +1,7 @@
 import { appState, dataState, dbStore, setStateField } from "../common/state.js";
 import { $, $button, $getInner, $queryOne } from "../lib/dom.js";
 import { _info, _log, _warn, openLogs } from "../lib/logger.js";
+import { getUserEmail } from "../api-caller/apiCaller.js";
 import {
   arrow_left, pen_solid, svg_chart, svg_check, svg_clock, svg_fuel, svg_menu, svg_search, svg_share,
   svg_trash,
@@ -24,11 +25,19 @@ const pageTitle = $getInner(mainHeader, '.page-title');
 const headerMenuPanel = $queryOne('#headerMenu .header-menu-panel');
 
 function toggleHeaderMenu() {
+  const opening = headerMenuPanel.classList.contains('display-none');
   headerMenuPanel.classList.toggle('display-none');
+  // Refreshed on every open, not just once at boot, since logging out and
+  // back in as a different account never reloads the page.
+  if (opening) { refreshHeaderMenuEmail(); }
 }
 
 function closeHeaderMenu() {
   headerMenuPanel.classList.add('display-none');
+}
+
+function refreshHeaderMenuEmail() {
+  $('headerMenuUserEmail').innerText = getUserEmail() || '';
 }
 
 function initUi() {
