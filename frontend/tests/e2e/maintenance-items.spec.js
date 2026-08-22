@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createFirstVehicle, createMaintenanceItem, daysAgoInputValue } from './helpers.js';
+import { createFirstVehicle, createMaintenanceItem, daysAgoInputValue, clickHeaderMenuItem } from './helpers.js';
 
 test.beforeEach(async ({ page }) => {
   await createFirstVehicle(page, { name: 'Auto de prueba', mileage: 10000 });
@@ -56,20 +56,20 @@ test('search filters the item list by name', async ({ page }) => {
   await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
   await createMaintenanceItem(page, { name: 'Rotación de neumáticos', intervalKm: 10000 });
 
-  await page.click('.search-toggle-btn');
+  await clickHeaderMenuItem(page, '.search-toggle-btn');
   await page.fill('#searchItem', 'aceite');
 
   await expect(page.locator('.row:has-text("Cambio de aceite")')).toBeVisible();
   await expect(page.locator('.row:has-text("Rotación de neumáticos")')).toHaveClass(/display-none/);
 });
 
-test('the search bar is hidden by default and toggles via the footer button', async ({ page }) => {
+test('the search bar is hidden by default and toggles via the header menu', async ({ page }) => {
   await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
   await createMaintenanceItem(page, { name: 'Rotación de neumáticos', intervalKm: 10000 });
 
   await expect(page.locator('#searchItem')).not.toBeVisible();
 
-  await page.click('.search-toggle-btn');
+  await clickHeaderMenuItem(page, '.search-toggle-btn');
   await expect(page.locator('#searchItem')).toBeVisible();
   await expect(page.locator('#searchItem')).toBeFocused();
 
@@ -77,7 +77,7 @@ test('the search bar is hidden by default and toggles via the footer button', as
   await expect(page.locator('.row:has-text("Rotación de neumáticos")')).toHaveClass(/display-none/);
 
   // Hiding the search bar again clears the filter, so nothing is left stuck hidden.
-  await page.click('.search-toggle-btn');
+  await clickHeaderMenuItem(page, '.search-toggle-btn');
   await expect(page.locator('#searchItem')).not.toBeVisible();
   await expect(page.locator('.row:has-text("Rotación de neumáticos")')).not.toHaveClass(/display-none/);
 });

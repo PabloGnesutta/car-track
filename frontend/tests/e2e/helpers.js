@@ -112,4 +112,21 @@ function daysAgoInputValue(days) {
   return date.toISOString().slice(0, 10);
 }
 
-export { gotoApp, ensureAuth, allowTestEmail, createFirstVehicle, createMaintenanceItem, daysAgoInputValue };
+/**
+ * Opens the header hamburger menu, then clicks the given item inside it. The
+ * menu auto-closes on any click inside it (see ui.js), so a test toggling
+ * the same item more than once (e.g. search open/close) needs to reopen the
+ * menu before every click - callers should use this helper each time rather
+ * than opening it once and clicking directly.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} itemSelector
+ */
+async function clickHeaderMenuItem(page, itemSelector) {
+  await page.click('#headerMenuBtn .btn');
+  await page.click(itemSelector);
+}
+
+export {
+  gotoApp, ensureAuth, allowTestEmail, createFirstVehicle, createMaintenanceItem, daysAgoInputValue,
+  clickHeaderMenuItem,
+};

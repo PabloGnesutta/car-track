@@ -1,6 +1,7 @@
 import { $, $button, $form, $getInner, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
 import { haptic } from "../lib/haptics.js";
+import { svg_logout } from "../svg/svgFn.js";
 import { apiLogin, apiSignup } from "../api-caller/apiCaller.js";
 import { afterLogin, logout } from "../appBoot.js";
 
@@ -21,11 +22,10 @@ authForm.addEventListener('submit', submitAuthForm);
 authModeToggle.addEventListener('click', () => setMode(!isSignupMode));
 
 /**
- * Wires the login/signup form and a "Cerrar sesión" footer button. Mirrors
- * initBackupUi()/initNotificationsUi()'s "add a footer button" pattern.
- * @param {HTMLElement} footerContainer
+ * Wires the login/signup form and a "Cerrar sesión" header-menu item.
+ * Mirrors initBackupUi()/initNotificationsUi()'s "add a menu item" pattern.
  */
-function initAuthUi(footerContainer) {
+function initAuthUi() {
   $button({
     label: 'Iniciar Sesión',
     appendTo: $queryOne('#authForm .submit'),
@@ -34,9 +34,10 @@ function initAuthUi(footerContainer) {
   setMode(false);
 
   $button({
-    class: 'logout-btn',
+    class: 'horizontal logout-btn',
     label: 'Cerrar sesión',
-    appendTo: footerContainer,
+    svgFn: svg_logout,
+    appendTo: $('logoutBtn'),
     listener: {
       fn: async () => {
         await logout();

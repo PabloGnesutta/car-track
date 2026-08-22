@@ -1,7 +1,10 @@
 import { appState, dataState, dbStore, setStateField } from "../common/state.js";
 import { $, $button, $getInner, $queryOne } from "../lib/dom.js";
 import { _info, _log, _warn, openLogs } from "../lib/logger.js";
-import { arrow_left, pen_solid, svg_chart, svg_check, svg_clock, svg_fuel, svg_search, svg_share, svg_trash } from "../svg/svgFn.js";
+import {
+  arrow_left, pen_solid, svg_chart, svg_check, svg_clock, svg_fuel, svg_menu, svg_search, svg_share,
+  svg_trash,
+} from "../svg/svgFn.js";
 import {
   deleteVehicleFromForm, editVehicle, openAddVehicle, openMileageForm,
   submitMileageForm, submitVehicleForm, switchVehicle,
@@ -18,6 +21,15 @@ import { openFuelForm, openFuelHistory, submitFuelForm } from "./fuel-ui.js";
 
 const mainHeader = $('mainHeader');
 const pageTitle = $getInner(mainHeader, '.page-title');
+const headerMenuPanel = $queryOne('#headerMenu .header-menu-panel');
+
+function toggleHeaderMenu() {
+  headerMenuPanel.classList.toggle('display-none');
+}
+
+function closeHeaderMenu() {
+  headerMenuPanel.classList.add('display-none');
+}
 
 function initUi() {
   // Go Back Button
@@ -52,14 +64,18 @@ function initUi() {
   $('newItemBtn').addEventListener('click', () => { openItemForm(false); });
 
   $button({
-    class: 'icon-btn search-toggle-btn',
+    appendTo: $('headerMenuBtn'),
+    svgFn: svg_menu,
+    listener: { fn: toggleHeaderMenu },
+  });
+
+  $button({
+    class: 'horizontal search-toggle-btn',
+    label: 'Buscar',
     svgFn: svg_search,
     listener: { fn: toggleSearch },
-    appendTo: $('mainFooter'),
+    appendTo: $('searchToggleBtn'),
   });
-  const searchToggleBtn = $queryOne('#mainFooter .search-toggle-btn');
-  searchToggleBtn.setAttribute('aria-label', 'Buscar');
-  searchToggleBtn.title = 'Buscar';
 
   $button({
     label: 'Marcar como realizado',
@@ -128,6 +144,23 @@ function initUi() {
   });
 
   modalBackdropHandler();
+
+  // Close the header menu on any click outside it - the hamburger button
+  // itself is inside #headerMenu, so the same click that opens the menu
+  // can't also immediately close it here.
+  $('app').addEventListener('click', e => {
+    if (headerMenuPanel.classList.contains('display-none')) { return; }
+    if (!(e.target instanceof Element) || !e.target.closest('#headerMenu')) {
+      closeHeaderMenu();
+    }
+  });
+
+  // Every menu item is a one-shot action (toggle search, export/import,
+  // request notification permission, log out) rather than something that
+  // opens further UI the menu needs to stay open behind - so any click
+  // inside the panel closes it too, instead of requiring each item's own
+  // handler to remember to.
+  headerMenuPanel.addEventListener('click', closeHeaderMenu);
 
   // Click Event Delegation
   $('app').addEventListener('click', e => {

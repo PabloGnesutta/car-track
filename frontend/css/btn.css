@@ -48,11 +48,13 @@
 .go-back {
   color: var(--text-primary);
 }
-.go-back .btn {
+.go-back .btn,
+#headerMenuBtn .btn {
   padding: 0.75rem;
 }
 
-.go-back .btn .icon {
+.go-back .btn .icon,
+#headerMenuBtn .btn .icon {
   width: 22px;
   height: 22px;
 }

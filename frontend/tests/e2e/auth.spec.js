@@ -3,9 +3,9 @@ import { gotoApp, allowTestEmail } from './helpers.js';
 
 /**
  * Onboarding's vehicle-creation modal blocks dismissal (and covers the
- * footer, where the logout button lives) until a first vehicle exists - so
- * any test that needs to reach the footer post-signup has to clear
- * onboarding first.
+ * header, where the hamburger menu's logout item lives) until a first
+ * vehicle exists - so any test that needs to reach it post-signup has to
+ * clear onboarding first.
  * @param {import('@playwright/test').Page} page
  */
 async function completeOnboarding(page) {
@@ -56,6 +56,7 @@ test('login with the wrong password is rejected', async ({ page }) => {
   await completeOnboarding(page);
 
   // Log out, then try logging back in with the wrong password.
+  await page.click('#headerMenuBtn .btn');
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
   await expect(page.locator('#authForm')).toBeVisible();
 
@@ -78,6 +79,7 @@ test('logout returns to the auth screen and clears localStorage', async ({ page 
   await expect(page.locator('#authForm')).toBeHidden();
   await completeOnboarding(page);
 
+  await page.click('#headerMenuBtn .btn');
   await page.getByRole('button', { name: 'Cerrar sesión' }).click();
 
   await expect(page.locator('#authForm')).toBeVisible();

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createFirstVehicle, createMaintenanceItem, daysAgoInputValue } from './helpers.js';
+import { createFirstVehicle, createMaintenanceItem, daysAgoInputValue, clickHeaderMenuItem } from './helpers.js';
 
 /**
  * Headless Chromium's real Notification backend always reports
@@ -39,14 +39,14 @@ test.beforeEach(async ({ page }) => {
   await stubNotificationApi(page);
 });
 
-test('clicking the footer button requests permission and updates its state', async ({ page }) => {
+test('clicking the notifications menu item requests permission and updates its state', async ({ page }) => {
   await createFirstVehicle(page);
 
   const btn = page.locator('.notifications-toggle-btn');
   await expect(btn).toHaveAttribute('data-permission', 'default');
   await expect(btn).toHaveAttribute('aria-label', 'Activar notificaciones');
 
-  await btn.click();
+  await clickHeaderMenuItem(page, '.notifications-toggle-btn');
 
   await expect(btn).toHaveAttribute('data-permission', 'granted');
   await expect(btn).toHaveAttribute('aria-label', 'Notificaciones activadas');
@@ -63,7 +63,7 @@ test('granting permission with an overdue item shows a local notification, once 
   });
 
   // Granting permission re-renders the vehicle chips, which is what triggers the check
-  await page.locator('.notifications-toggle-btn').click();
+  await clickHeaderMenuItem(page, '.notifications-toggle-btn');
 
   await expect.poll(() => page.evaluate(() => window.__shownNotifications.length)).toBe(1);
   const shown = await page.evaluate(() => window.__shownNotifications[0]);
@@ -85,7 +85,7 @@ test('no notification is shown when nothing is due', async ({ page }) => {
   await spyOnShowNotification(page);
 
   await createMaintenanceItem(page, { name: 'Correa de distribución', intervalKm: 60000 });
-  await page.locator('.notifications-toggle-btn').click();
+  await clickHeaderMenuItem(page, '.notifications-toggle-btn');
 
   await page.waitForTimeout(500);
   expect(await page.evaluate(() => window.__shownNotifications.length)).toBe(0);

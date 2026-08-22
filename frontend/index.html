@@ -74,7 +74,19 @@
 
     <header id="mainHeader">
       <div class="page-title"></div>
-      <div id="goBack2" class="go-back"></div>
+      <div class="header-icons">
+        <div id="goBack2" class="go-back"></div>
+        <div id="headerMenu" class="header-menu">
+          <div id="headerMenuBtn"></div>
+          <div class="header-menu-panel display-none">
+            <div id="searchToggleBtn" class="header-menu-item"></div>
+            <div id="exportDataBtn" class="header-menu-item"></div>
+            <div id="importDataBtn" class="header-menu-item"></div>
+            <div id="notificationsToggleBtn" class="header-menu-item"></div>
+            <div id="logoutBtn" class="header-menu-item"></div>
+          </div>
+        </div>
+      </div>
     </header>
 
     <div class="views">
@@ -327,10 +339,6 @@
       </div>
     </div>
 
-    <div id="mainFooter">
-      <div id="cacheMajorVersion" class="display-none"></div>
-      <div id="indexedDbVersion" class="display-none"></div>
-    </div>
   </div>
 
   <!-- Cache update banner -->
@@ -362,6 +370,8 @@
     <div id="closeLogsBtn">
       <h4>Cerrar logs</h4>
     </div>
+    <div id="cacheMajorVersion" class="display-none"></div>
+    <div id="indexedDbVersion" class="display-none"></div>
     <div id="logs"></div>
   </div>
 </body>

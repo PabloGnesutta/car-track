@@ -5,6 +5,7 @@ test('exported backup is a JSON file containing the vehicle and its maintenance 
   await createFirstVehicle(page, { name: 'Auto de prueba', mileage: 10000 });
   await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
 
+  await page.click('#headerMenuBtn .btn');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Exportar datos' }).click(),
@@ -27,6 +28,7 @@ test('export then import round-trips the data (survives the confirm/alert dialog
   await createFirstVehicle(page, { name: 'Original', mileage: 10000 });
   await createMaintenanceItem(page, { name: 'Cambio de aceite', intervalKm: 10000 });
 
+  await page.click('#headerMenuBtn .btn');
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Exportar datos' }).click(),

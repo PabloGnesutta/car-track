@@ -1,4 +1,4 @@
-import { $button, $new, $newInput } from "../lib/dom.js";
+import { $, $button, $new, $newInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
 import { toYYYYMMDD } from "../lib/date.js";
 import { svg_download, svg_upload } from "../svg/svgFn.js";
@@ -10,44 +10,29 @@ import { showAlert, showConfirm } from "./confirm-ui.js";
 let fileInput;
 
 /**
- * Adds "Exportar"/"Importar" buttons to the given container (the app footer)
- * for full-database JSON backup/restore.
- * @param {HTMLElement} container
+ * Adds "Exportar"/"Importar" header-menu items for full-database JSON
+ * backup/restore.
  */
-function initBackupUi(container) {
+function initBackupUi() {
   $button({
-    class: 'icon-btn export-btn',
+    class: 'horizontal export-btn',
+    label: 'Exportar datos',
     svgFn: svg_download,
-    appendTo: container,
+    appendTo: $('exportDataBtn'),
     listener: { fn: downloadBackup },
   });
-  setButtonLabel(container, '.export-btn', 'Exportar datos');
 
   fileInput = $newInput({ type: 'file', accept: '.json,application/json', class: 'display-none' });
   fileInput.addEventListener('change', handleFileSelected);
   document.body.append(fileInput);
 
   $button({
-    class: 'icon-btn import-btn',
+    class: 'horizontal import-btn',
+    label: 'Importar datos',
     svgFn: svg_upload,
-    appendTo: container,
+    appendTo: $('importDataBtn'),
     listener: { fn: () => fileInput.click() },
   });
-  setButtonLabel(container, '.import-btn', 'Importar datos');
-}
-
-/**
- * $button() has no accessible-name option for icon-only buttons — set it
- * manually so screen readers announce something more useful than "button".
- * @param {HTMLElement} container
- * @param {string} selector
- * @param {string} label
- */
-function setButtonLabel(container, selector, label) {
-  const btn = container.querySelector(selector);
-  if (!btn) { return; }
-  btn.setAttribute('aria-label', label);
-  btn.title = label;
 }
 
 async function downloadBackup() {

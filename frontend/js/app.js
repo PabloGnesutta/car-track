@@ -52,7 +52,7 @@ eventBus.on('IndexedDbInited', async ({ version }) => {
 initAppState();
 initUi();
 dbugBtns();
-initAuthUi($('mainFooter'));
-initBackupUi($('mainFooter'));
-initNotificationsUi($('mainFooter'));
+initAuthUi();
+initBackupUi();
+initNotificationsUi();
 initVoiceMileageUi();

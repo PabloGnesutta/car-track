@@ -16,8 +16,7 @@
 }
 
 #app:not([data-auth-stage='ready']) #mainHeader,
-#app:not([data-auth-stage='ready']) .views,
-#app:not([data-auth-stage='ready']) #mainFooter {
+#app:not([data-auth-stage='ready']) .views {
   display: none;
 }
 
@@ -37,8 +36,4 @@
   font: inherit;
   text-align: center;
   cursor: pointer;
-}
-
-#mainFooter .logout-btn {
-  margin-inline-start: auto;
 }
