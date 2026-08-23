@@ -29,7 +29,7 @@ npm run test:e2e   # tests/e2e/ — Playwright against a real browser + IndexedD
 - **E2e tests** (`playwright.config.js`) spin up the real backend (`webServer` config) and drive Chromium. Each test gets a fresh, isolated browser context, so IndexedDB starts empty every time — no manual cleanup between tests. `workers: 2` and a `globalSetup` warm-up (`tests/e2e/global-setup.js`) are both there because the backend is a minimal hand-rolled static file server with no caching: a cold burst of concurrent requests from more/unwarmed workers reliably times out the first test or two. Bump workers back up if the backend ever gets a real static-file layer. The e2e backend runs on its own port and its own sqlite file (`tests/testPort.js`'s `TEST_PORT`, and `DB_NAME=cartrack.test.db` passed via `webServer.env` in `playwright.config.js`), deliberately isolated from a manually-run `npm run serve` (which uses `backend/.env`'s `PORT` and the default `cartrack.db`) — they used to share both, so resetting the e2e database for a clean run (or Playwright's `reuseExistingServer` picking up whatever was already listening) could wipe or hijack real local dev/test data. `tests/e2e/helpers.js`'s `allowTestEmail`/`global-teardown.js` open `cartrack.test.db` directly and must be kept in sync with `DB_NAME` if it ever changes.
 - Headless Chromium always reports `Notification.permission` as `"denied"` and ignores `context.grantPermissions(['notifications'])` — a known headless-mode limitation, not a bug in the app. `tests/e2e/notifications.spec.js` works around it by replacing `window.Notification` with a controllable fake via `page.addInitScript` before the app loads, and by recording (rather than letting through) calls to `ServiceWorkerRegistration.showNotification`, so the suite stays headless-friendly and deterministic.
 
-**Local dev caveat**: `frontend/cacheServiceWorker.js` has an `INTERCEPT_FETCH_REQUESTS` flag. Set it to `false` while developing so hot-reloaded changes are visible instead of the cached service-worker version; set it back to `true` before release along with bumping the cache version numbers (see `frontend/js/README.md`).
+**Local dev caveat**: `frontend/cacheServiceWorker.js` serves everything cache-first, so a browser tab left open while editing keeps serving the pre-last-commit cached version. Use devtools' "Disable cache" (or Application tab → Service Workers → "Update on reload") while iterating, or flip `cacheServiceWorker.js`'s `BYPASS_CACHE` to `true` locally (never commit it that way — see "Service worker caching" below and `frontend/js/README.md`).
 
 ## Architecture
 
@@ -49,7 +49,7 @@ Vanilla JS, ES modules, no framework. Single-page app with `data-*` attributes o
 - **Persistence** (`js/lib/indexedDb.js` + `js/local-db/*`): IndexedDB wrapper (db name `CarTrack`, versioned via `dbVersion` — bumping it wipes/upgrades stores) exposing `putOne/getOne/getAll/getOneWithIndex/getAllWithIndex/deleteOne/deleteMany/clearStore`. Five object stores: `vehicles`, `maintenanceItems` (indexed by `vehicleKey`), `serviceHistory` (indexed by `itemKey`), `mileageHistory` (indexed by `vehicleKey`), `fuelHistory` (indexed by `vehicleKey`). Per-store modules in `js/local-db/` (`vehicle-db.js`, `maintenance-db.js`, `service-db.js`, `mileage-db.js`, `fuel-db.js`, `backup-db.js`) wrap these generic functions with typed, store-specific calls. `backup-db.js` reads/writes *all* stores at once for JSON export/import (`exportAllData`/`restoreAllData`); its shape-validation and Date-revival logic lives in the dependency-free `js/lib/backupValidation.js` (see Tests below for why) — `fuelHistory` is treated as optional there so pre-fuel-tracking backups still import cleanly. `seed.js` can populate fake data for local testing (invoked manually from `app.js`, normally commented out).
 - **UI** (`js/ui/*`): one module per feature area (`vehicle-ui.js`, `maintenance-ui.js`, `service-ui.js`, `mileage-ui.js`, `fuel-ui.js`, `backup-ui.js`, `report-ui.js`, `analytics-ui.js`, `confirm-ui.js`) plus `ui.js` which wires up global button handlers and a single delegated click listener on `#app` keyed off `data-click-action` (see the `switch` in `initUi()` for the action → handler map — add new click actions there rather than attaching ad hoc listeners). `backup-ui.js` wires the footer's export/import icon buttons to `backup-db.js`. `report-ui.js` builds a standalone printable HTML report of a vehicle's full history and shares it via the Web Share API (falls back to opening it in a new tab). `analytics-ui.js` aggregates service-record costs (see `js/lib/costAnalytics.js`) into a total/by-item/by-month breakdown shown in a modal. `fuel-ui.js` logs fill-ups and shows L/100km trend (see `js/lib/fuelEconomy.js` — assumes every fill-up tops off the tank, the standard simplifying assumption for computing efficiency from odometer readings alone). `confirm-ui.js` is an app-themed, Promise-based replacement for the native `confirm()`/`alert()` (`showConfirm`/`showAlert`) — use these instead of the native dialogs so destructive actions stay visually consistent; e2e tests interact with `#confirmDialog.show` + `.confirm-ok`/`.confirm-cancel .btn` rather than Playwright's `page.on('dialog', ...)`, since no native dialog ever fires.
 - **DOM helpers** (`js/lib/dom.js`): `$`/`$queryOne`/`$new`/`$button` etc. are the only way elements get created/queried — no direct `document.*` calls elsewhere. `$button()` builds the standard button markup (icon/label/overlay) used everywhere for visual consistency.
-- **PWA/offline** (`cacheServiceWorker.js`, `js/initializeCache.js`): app-shell caching with a version banner (`#updateBanner`) prompting the user to refresh when a new cache version is deployed. `js/lib/badge.js` sets the installed PWA's home-screen icon badge (Badging API, feature-detected) to the combined overdue+due-soon maintenance count across all vehicles. A shimmering `#loadingSkeleton` overlay (see `app.js`) covers the app until `IndexedDbInited` fires (or an 8s safety-net timeout elapses), instead of a blank flash.
+- **PWA/offline** (`cacheServiceWorker.js`, `js/initializeCache.js`): cache-first app-shell caching (see "Service worker caching" below) with a version banner (`#updateBanner`) prompting the user to refresh when a new cache version is deployed. `js/lib/badge.js` sets the installed PWA's home-screen icon badge (Badging API, feature-detected) to the combined overdue+due-soon maintenance count across all vehicles. A shimmering `#loadingSkeleton` overlay (see `app.js`) covers the app until `IndexedDbInited` fires (or an 8s safety-net timeout elapses), instead of a blank flash.
 - **Due-item notifications** (`js/lib/notifications.js`, `js/ui/notifications-ui.js`): local (not server-pushed) notifications — there's no backend data API, so nothing server-side can know when an item becomes due. `notifyDueItemsOnce()` is called from `renderVehicleChips()` (same place `setAppBadge` is called) and shows a notification via `ServiceWorkerRegistration.showNotification` at most once per calendar day, throttled via a `localStorage` date stamp. `notifications-ui.js` adds a footer button (`Notification.requestPermission()`, must run from a user gesture) whose label reflects granted/denied/default permission state. `cacheServiceWorker.js` has a `notificationclick` handler that focuses/opens the app. Only fires while the app is actually open/running (on load or whenever the vehicle chips re-render) — it cannot wake the app from fully closed, since that needs real server-triggered Web Push, which isn't compatible with this app's local-first/no-data-API design.
 - **Maintenance status** (`js/lib/maintenanceStatus.js`): `computeStatus()` is the single source of truth for a maintenance item's `ok`/`due-soon`/`overdue` state; `STATUS_LABELS`, `statusBadgeHtml()` (icon+label, shared by the item rows and single-item view), and `formatDueDetail`/`formatRemindersBanner` are shared by the item rows, the single-item view, the maintenance-list reminders banner, and the shareable report — reuse these rather than re-deriving status elsewhere.
 - **Haptics** (`js/lib/haptics.js`): `haptic(pattern?)` wraps the Vibration API, feature-detected/best-effort. Called on mark-serviced, item delete (including via swipe), and the confirm dialog's OK button — meaningful action-completed moments, not every tap.
@@ -58,6 +58,49 @@ Vanilla JS, ES modules, no framework. Single-page app with `data-*` attributes o
 - **Swipe-to-act on maintenance rows**: each row is `.row` (outer, clips + positions two `.swipe-action` color layers) wrapping `.row-content` (the visible card, which translates on drag) — see the pointerdown/move/up handlers in `maintenance-ui.js`. Swiping right past the threshold opens the mark-as-serviced form; left past threshold deletes (existing undo toast). A plain tap (movement under the threshold) is left alone so normal click-navigation still fires. If you touch this, know that `#maintenanceListView .list .row`/`.row-content` intentionally override the *generic* `.list .row` rule used by the (unrelated, unwrapped) service/mileage/fuel history lists — don't merge them back together.
 - **CSS** (`frontend/css/`): plain CSS, no preprocessor, split by concern (`style.css` base/layout, `classes.css` utility classes, `btn.css`, `input.css`, `service.css`, `vehicle-chips.css`, `toast.css`, `logger.css`, `cache-control.css`, `reminders.css`, `skeleton.css`, `confirm.css`, `analytics.css`), all linked directly in `index.html`. View switching and form/modal visibility are driven by `data-*` attribute selectors matching `appState` fields set via `setStateField`, not by JS show/hide toggling classes per element.
 - **Language**: all user-facing strings (labels, placeholders, button text) are in Spanish (`lang="es"` in `index.html`); keep new UI text consistent with that.
+
+## Service worker caching (`frontend/cacheServiceWorker.js`, `.githooks/pre-commit`)
+
+Ported from the sibling `fridge-track`/`sonar` projects' own take on this same problem. Everything
+the backend's static-asset paths serve (`index.html`, `css/**`, `js/**`, `static/**` — icons/
+manifest.json/favicon.ico) is served **cache-first**: the app loads instantly from cache, network
+is only hit on a cache miss. This used to be off entirely (an `INTERCEPT_FETCH_REQUESTS` flag,
+permanently `false` since nothing ever flipped it before a release) specifically because a
+hand-maintained cache version is easy to forget to bump — shipping stale cached JS to a real user
+is worse than no caching at all. That risk is what's actually gone now, not the tradeoff being
+ignored: the single cache's name embeds a version (`cacheVersion`, a `cacheServiceWorker.js`-top
+const) that's a **content hash of exactly the files it covers, computed and written automatically
+by `.githooks/pre-commit`** on every commit — never hand-maintained, so it can't be forgotten. One
+cache (`appCache`), not split by file type like sonar's `jsCache`/`wavCache` — car-track has no
+equivalent large-binary asset type worth a separate, longer-lived cache.
+
+**One-time setup**: `.githooks/pre-commit` isn't `.git/hooks/pre-commit` (that directory isn't
+tracked by git) — `frontend/package.json`'s `"prepare"` script runs `git config core.hooksPath
+.githooks` automatically on `npm install`, so a normal `cd frontend && npm install` wires it up
+with no extra step. (If that's ever skipped, running `git config core.hooksPath .githooks` from
+anywhere inside the repo does the same thing by hand.)
+
+**Local dev**: because the version only changes when the hook runs (i.e. on commit), a browser tab
+left open while actively editing files *without* committing keeps serving the cache-first version
+from before your last commit — the classic "PWA + service worker" dev annoyance, not something
+specific to this setup. Standard mitigation: check "Disable cache" (or Application tab → Service
+Workers → "Update on reload") in devtools while iterating, or flip `cacheServiceWorker.js`'s
+`BYPASS_CACHE` to `true` locally (never commit it that way — it defeats cache-first serving for
+real users).
+
+`js/initializeCache.js`'s update banner is what actually gets an already-open client onto a new
+version: it listens for the browser detecting that the `cacheServiceWorker.js` *script itself*
+changed bytes (which it always does whenever the hook bumps `cacheVersion`, since that's literally
+part of the script's own source), deletes stale caches, and prompts a refresh. This is a separate
+detection path from `appCache`'s own cache-first serving — browsers already re-check a service
+worker's script on every navigation regardless of caching strategy, so it doesn't depend on
+`appCache` being fresh at all. On a genuinely first-ever install, `initializeCache.js` also does
+one silent reload once the new service worker actually takes control (`controllerchange`) —
+without that, this exact first visit's own page load never goes through the SW (nothing controlled
+it yet), so offline support wouldn't start working until a separate, later visit.
+
+The existing `notificationclick` handler (focuses/opens the app — see "Due-item notifications"
+above) and the cache-first `fetch` handler are independent; neither depends on the other's state.
 
 ## Security
 
