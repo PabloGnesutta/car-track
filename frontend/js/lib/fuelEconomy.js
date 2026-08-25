@@ -6,18 +6,20 @@
  */
 
 /**
- * @typedef {object} FuelEfficiencyPoint
- * @property {number} mileage
- * @property {number} liters
- * @property {Date} date
- * @property {number|null} distance - km since the previous fill-up; null for the first entry (no prior reference)
- * @property {number|null} litersPer100Km - null when distance is null or zero
+ * @typedef {FuelEntry & {
+ *   distance: number|null,
+ *   litersPer100Km: number|null,
+ * }} FuelEfficiencyPoint
+ * distance - km since the previous fill-up; null for the first entry (no prior reference)
+ * litersPer100Km - null when distance is null or zero
  */
 
 /**
  * Computes L/100km between each consecutive fill-up, assuming every entry
  * is a full-tank fill-up (see fuel-db.js's FuelRecord doc for why). Entries
- * must be sorted oldest-first by mileage.
+ * must be sorted oldest-first by mileage. Every other field on the input
+ * entry (cost, notes, _key, ...) passes through onto the point unchanged,
+ * so callers can render/act on it without a second lookup.
  * @param {FuelEntry[]} entriesOldestFirst
  * @returns {FuelEfficiencyPoint[]}
  */
@@ -30,7 +32,7 @@ function computeFuelEfficiency(entriesOldestFirst) {
   for (const entry of entriesOldestFirst) {
     const distance = previousMileage !== null ? entry.mileage - previousMileage : null;
     const litersPer100Km = (distance !== null && distance > 0) ? (entry.liters / distance) * 100 : null;
-    points.push({ mileage: entry.mileage, liters: entry.liters, date: entry.date, distance, litersPer100Km });
+    points.push({ ...entry, distance, litersPer100Km });
     previousMileage = entry.mileage;
   }
 

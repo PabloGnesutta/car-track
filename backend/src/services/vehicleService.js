@@ -152,4 +152,4 @@ function createVehicleService(db) {
   return { listVehicles, createVehicle, updateVehicle, logMileage, deleteVehicle };
 }
 
-export { createVehicleService, mileageRecordFromRow };
+export { createVehicleService, mileageRecordFromRow, vehicleFromRow };

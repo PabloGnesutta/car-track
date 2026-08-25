@@ -17,7 +17,7 @@ import { openServiceForm, submitServiceForm, tryDeleteServiceRecord } from "./se
 import { openMileageHistory } from "./mileage-ui.js";
 import { shareVehicleReport } from "./report-ui.js";
 import { openCostAnalytics } from "./analytics-ui.js";
-import { openFuelForm, openFuelHistory, submitFuelForm } from "./fuel-ui.js";
+import { openFuelForm, openFuelHistory, submitFuelForm, tryDeleteFuelRecord } from "./fuel-ui.js";
 
 
 const mainHeader = $('mainHeader');
@@ -202,6 +202,9 @@ function initUi() {
         break;
       case 'deleteServiceRecord':
         tryDeleteServiceRecord(dataset.serviceKey || '', dataset.itemKey || '');
+        break;
+      case 'deleteFuelRecord':
+        tryDeleteFuelRecord(dataset.fuelKey || '');
         break;
       default:
         return _warn(' :: clickAction not defined: ' + dataset.clickAction);

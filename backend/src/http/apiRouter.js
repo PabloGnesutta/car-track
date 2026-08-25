@@ -87,6 +87,7 @@ export async function handleApiRequest(req, res, segments) {
 
     if (route === 'fuelHistory/fetch') { return successResponse(res, fuelService.listForVehicle(user.id, body.vehicleId)); }
     if (route === 'fuelHistory/create') { return successResponse(res, fuelService.createRecord(user.id, body.vehicleId, body)); }
+    if (route === 'fuelHistory/delete') { fuelService.deleteRecord(user.id, body.recordId); return successResponse(res, { ok: true }); }
 
     return errorResponse(res, 'Ruta de API no encontrada: ' + route, 404);
   } catch (err) {

@@ -43,9 +43,13 @@ function recordFromApi(data) {
 }
 
 /**
- * Records a fuel fill-up. No delete - this app never had a per-record fuel
- * delete, only a vehicle-delete cascade.
- * @param {number} vehicleKey
+ * Records a fuel fill-up.
+ *
+ * The odometer reading on the fill-up is also a mileage reading: if it's
+ * ahead of the vehicle's current mileage, the server advances the vehicle
+ * too, so this mutates the given Vehicle object the same way
+ * vehicle-db.js's logMileage does.
+ * @param {import("./vehicle-db.js").Vehicle} vehicle
  * @param {number} mileage
  * @param {number} liters
  * @param {Date} date
@@ -53,18 +57,24 @@ function recordFromApi(data) {
  * @param {string} [notes]
  * @returns {ServiceReturn<FuelRecord>}
  */
-async function addFuelRecord(vehicleKey, mileage, liters, date, cost = null, notes = '') {
+async function addFuelRecord(vehicle, mileage, liters, date, cost = null, notes = '') {
+  const vehicleKey = vehicle._key;
   const result = await apiCall('fuelHistory/create', { vehicleId: vehicleKey, mileage, liters, date: date.getTime(), cost, notes });
   if (!result.data) { return { errorMsg: result.error }; }
 
-  const record = recordFromApi(result.data);
-  const strVehicleKey = vehicleKey.toString();
+  const { record: recordData, vehicle: updatedVehicle } = result.data;
+  const record = recordFromApi(recordData);
+  const strVehicleKey = (vehicleKey || '').toString();
   let history = dbStore.fuelHistory[strVehicleKey];
   if (!history) {
     history = [];
     dbStore.fuelHistory[strVehicleKey] = history;
   }
   history.unshift(record);
+
+  vehicle.currentMileage = updatedVehicle.currentMileage;
+  vehicle.currentMileageDate = new Date(updatedVehicle.currentMileageDate);
+  vehicle.updatedAt = new Date(updatedVehicle.updatedAt);
 
   return { data: record };
 }
@@ -87,5 +97,18 @@ async function getFuelHistory(vehicleKey) {
   return history;
 }
 
+/**
+ * Deletes a fuel record. Never rolls back the vehicle's current mileage
+ * even if this fill-up had advanced it (see addFuelRecord) - mileage
+ * readings are append-only everywhere else in the app too.
+ * @param {FuelRecord} record
+ * @returns {Promise<boolean>}
+ */
+async function deleteFuelRecord(record) {
+  if (!record._key) { return false; }
+  const result = await apiCall('fuelHistory/delete', { recordId: record._key });
+  return !!result.data;
+}
 
-export { addFuelRecord, getFuelHistory, recordFromApi as fuelRecordFromApi };
+
+export { addFuelRecord, getFuelHistory, deleteFuelRecord, recordFromApi as fuelRecordFromApi };

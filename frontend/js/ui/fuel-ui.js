@@ -1,10 +1,14 @@
 import { fromYYYYMMDD, timeAgo, toYYYYMMDD } from "../lib/date.js";
 import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom.js";
 import { _error } from "../lib/logger.js";
-import { dataState, setStateField } from "../common/state.js";
-import { addFuelRecord, getFuelHistory } from "../local-db/fuel-db.js";
+import { dataState, dbStore, setStateField } from "../common/state.js";
+import { addFuelRecord, deleteFuelRecord, getFuelHistory } from "../local-db/fuel-db.js";
 import { computeFuelEfficiency, averageFuelEfficiency } from "../lib/fuelEconomy.js";
 import { haptic } from "../lib/haptics.js";
+import { showUndoToast } from "../lib/toast.js";
+import { svg_trash } from "../svg/svgFn.js";
+import { updateMileageDisplay } from "./vehicle-ui.js";
+import { fetchAndRenderMaintenanceItems } from "./maintenance-ui.js";
 
 
 const fuelHistoryModal = $('fuelHistoryModal');
@@ -59,9 +63,10 @@ async function populateFuelHistory(vehicleKey) {
 }
 
 /**
- * @param {import("../lib/fuelEconomy.js").FuelEfficiencyPoint & {notes?: string, cost?: number|null}} point
+ * @param {import("../lib/fuelEconomy.js").FuelEfficiencyPoint} point
  */
 function appendFuelHistoryRow(point) {
+  const key = (point._key || '').toString();
   const _mileage = $new({ class: 'mileage', text: `${point.mileage.toLocaleString('es')} km` });
   const _efficiency = $new({
     class: 'efficiency',
@@ -70,7 +75,17 @@ function appendFuelHistoryRow(point) {
   const _meta = $new({ class: 'liters', text: `${point.liters.toLocaleString('es')} L · ${timeAgo(point.date)}` });
   const _rightSide = $new({ class: 'right-side', children: [_efficiency, _meta] });
 
-  const row = $new({ class: 'row fuel-row', children: [_mileage, _rightSide] });
+  if (point.cost) {
+    _rightSide.prepend($new({ class: 'cost', text: `$${point.cost.toLocaleString('es', { maximumFractionDigits: 2 })}` }));
+  }
+
+  const _deleteIcon = $new({ class: 'delete-icon', html: svg_trash() });
+
+  const row = $new({
+    class: 'row fuel-row',
+    children: [_mileage, _rightSide, _deleteIcon],
+    dataset: [['clickAction', 'deleteFuelRecord'], ['fuelKey', key]],
+  });
   fuelHistoryList.append(row);
 }
 
@@ -108,17 +123,54 @@ async function submitFuelForm(e) {
   const cost = costStr ? Number(costStr) : null;
   const notes = formData.get('fuelNotes')?.toString() || '';
 
-  const result = await addFuelRecord(vehicle._key, mileage, liters, date, cost, notes);
+  const result = await addFuelRecord(vehicle, mileage, liters, date, cost, notes);
   if (!result.data) { return _error(result.errorMsg); }
 
   haptic();
   fuelForm.reset();
   setStateField('showFuelForm', false);
 
+  // A fill-up mileage ahead of the vehicle's current mileage advances it
+  // (see addFuelRecord) - keep the header reading and maintenance statuses,
+  // which depend on it, in sync.
+  updateMileageDisplay(vehicle);
+  await fetchAndRenderMaintenanceItems(vehicle);
+
   // Return to the (now refreshed) history list rather than closing everything.
   await populateFuelHistory(vehicle._key);
   setStateField('showFuelHistory', true);
 }
 
+/**
+ * Deletes a fuel record, deferred until the undo toast's window truly
+ * expires (until then only the in-memory cache changes, so "undo" is a pure
+ * local restore with no network call) - same convention as
+ * tryDeleteServiceRecord. Re-renders the whole list rather than patching
+ * one row out, since L/100km and the average depend on the full sequence
+ * of remaining fill-ups.
+ * @param {string} fuelKey
+ */
+async function tryDeleteFuelRecord(fuelKey) {
+  const vehicle = dataState.currentVehicle;
+  if (!vehicle || !vehicle._key) { return; }
 
-export { openFuelHistory, openFuelForm, submitFuelForm };
+  const strVehicleKey = vehicle._key.toString();
+  const history = dbStore.fuelHistory[strVehicleKey] || [];
+  const key = +fuelKey;
+  const idx = history.findIndex(r => r._key === key);
+  if (idx === -1) { return; }
+  const [record] = history.splice(idx, 1);
+
+  haptic();
+  await populateFuelHistory(vehicle._key);
+
+  showUndoToast('Carga de combustible eliminada', () => {
+    history.splice(idx, 0, record);
+    populateFuelHistory(vehicle._key);
+  }, {
+    onExpire: () => deleteFuelRecord(record),
+  });
+}
+
+
+export { openFuelHistory, openFuelForm, submitFuelForm, tryDeleteFuelRecord };

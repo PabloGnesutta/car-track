@@ -293,5 +293,5 @@ async function submitMileageForm(e) {
 export {
   openVehicleForm, submitVehicleForm, deleteVehicleFromForm, activateVehicle,
   renderVehicleChips, switchVehicle, openAddVehicle, editVehicle,
-  openMileageForm, submitMileageForm,
+  openMileageForm, submitMileageForm, updateMileageDisplay,
 };

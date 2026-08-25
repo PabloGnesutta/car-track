@@ -81,6 +81,7 @@
 
 .fuel-history-list .row .right-side {
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
@@ -94,6 +95,11 @@
 .fuel-row .efficiency {
   font-weight: bold;
   color: var(--text-primary);
+}
+
+.fuel-row .cost {
+  color: var(--status-ok-text);
+  font-size: 14px;
 }
 
 .fuel-average {
