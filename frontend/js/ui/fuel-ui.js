@@ -79,13 +79,13 @@ function appendFuelHistoryRow(point) {
     _rightSide.prepend($new({ class: 'cost', text: `$${point.cost.toLocaleString('es', { maximumFractionDigits: 2 })}` }));
   }
 
-  const _deleteIcon = $new({ class: 'delete-icon', html: svg_trash() });
-
-  const row = $new({
-    class: 'row fuel-row',
-    children: [_mileage, _rightSide, _deleteIcon],
+  const _deleteIcon = $new({
+    class: 'delete-icon',
+    html: svg_trash(),
     dataset: [['clickAction', 'deleteFuelRecord'], ['fuelKey', key]],
   });
+
+  const row = $new({ class: 'row fuel-row', children: [_mileage, _rightSide, _deleteIcon] });
   fuelHistoryList.append(row);
 }
 
