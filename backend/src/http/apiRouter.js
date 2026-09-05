@@ -1,5 +1,5 @@
 import { db } from '../db/db.js';
-import { readJsonBody, INVALID_JSON_MESSAGE } from './bodyParser.js';
+import { readJsonBody, INVALID_JSON_MESSAGE, BODY_TOO_LARGE_MESSAGE } from './bodyParser.js';
 import { errorResponse, successResponse } from './httpResponses.js';
 import { createAuthService } from '../services/authService.js';
 import { createVehicleService } from '../services/vehicleService.js';
@@ -94,6 +94,9 @@ export async function handleApiRequest(req, res, segments) {
     if (err instanceof ServiceError) { return errorResponse(res, err.message, 400); }
     if (err instanceof Error && err.message === INVALID_JSON_MESSAGE) {
       return errorResponse(res, err.message, 400);
+    }
+    if (err instanceof Error && err.message === BODY_TOO_LARGE_MESSAGE) {
+      return errorResponse(res, err.message, 413);
     }
     error('---Error @handleApiRequest', err);
     return errorResponse(res, 'Something went wrong', 500);

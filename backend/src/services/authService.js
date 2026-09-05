@@ -7,6 +7,8 @@ import { ServiceError } from './ServiceError.js';
 /**
  * @param {import('node:sqlite').DatabaseSync} db
  */
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
 function createAuthService(db) {
   /**
    * @param {string} email
@@ -47,9 +49,10 @@ function createAuthService(db) {
    */
   function createSession(userId) {
     const token = randomBytes(32).toString('hex');
+    const now = Date.now();
     db.prepare(
-      'INSERT INTO sessions (token, user_id, created_at) VALUES (?, ?, ?)'
-    ).run(token, userId, Date.now());
+      'INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)'
+    ).run(token, userId, now, now + SESSION_TTL_MS);
     return token;
   }
 
@@ -58,11 +61,13 @@ function createAuthService(db) {
    */
   function getUserBySessionToken(token) {
     if (!token) { return null; }
-    const user = db.prepare(
-      `SELECT users.id, users.email, users.name FROM sessions
-       JOIN users ON users.id = sessions.user_id
-       WHERE sessions.token = ?`
-    ).get(token);
+    const session = db.prepare('SELECT user_id, expires_at FROM sessions WHERE token = ?').get(token);
+    if (!session) { return null; }
+    if (session.expires_at != null && Number(session.expires_at) < Date.now()) {
+      db.prepare('DELETE FROM sessions WHERE token = ?').run(token);
+      return null;
+    }
+    const user = db.prepare('SELECT id, email, name FROM users WHERE id = ?').get(session.user_id);
     return user || null;
   }
 

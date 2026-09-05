@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { debug, log } from '../logger/logger.js';
 import { errorResponse } from './httpResponses.js';
 import { SECURITY_HEADERS } from './securityHeaders.js';
@@ -10,6 +10,7 @@ import { handleApiRequest } from './apiRouter.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PUBLIC_DIR = join(__dirname, '../', '../', '../', 'frontend');
+const PUBLIC_DIR_RESOLVED = resolve(PUBLIC_DIR);
 
 /**
  * Main handler of the request. 
@@ -69,7 +70,18 @@ export async function handleRequest(req, res) {
  */
 function sendAssetFile(res, fileRoute, contentType) {
   // TODO: Not very fond of this spread
-  const filePath = join(PUBLIC_DIR, ...fileRoute);
+  const filePath = resolve(join(PUBLIC_DIR, ...fileRoute));
+
+  // fileRoute segments come straight from the URL - reject anything that
+  // resolves outside PUBLIC_DIR (e.g. `/css/../../backend/.env`) instead of
+  // trusting path.join to keep it contained, since it doesn't.
+  if (filePath !== PUBLIC_DIR_RESOLVED && !filePath.startsWith(PUBLIC_DIR_RESOLVED + sep)) {
+    log('---Path traversal attempt blocked @sendAssetFile', filePath);
+    res.writeHead(403, SECURITY_HEADERS);
+    res.end();
+    return null;
+  }
+
   fs.stat(filePath, (err, stat) => {
     if (err === null) {
       res.writeHead(200, { 'content-type': contentType, ...SECURITY_HEADERS });
