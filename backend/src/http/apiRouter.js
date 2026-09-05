@@ -1,6 +1,7 @@
 import { db } from '../db/db.js';
 import { readJsonBody, INVALID_JSON_MESSAGE, BODY_TOO_LARGE_MESSAGE } from './bodyParser.js';
 import { errorResponse, successResponse } from './httpResponses.js';
+import { checkRateLimit } from './rateLimiter.js';
 import { createAuthService } from '../services/authService.js';
 import { createVehicleService } from '../services/vehicleService.js';
 import { createMaintenanceService } from '../services/maintenanceService.js';
@@ -28,6 +29,13 @@ function getBearerUser(req) {
 }
 
 /**
+ * @param {import('./types').ApiRequest} req
+ */
+function getClientIp(req) {
+  return req.socket.remoteAddress || 'unknown';
+}
+
+/**
  * Routes /api/* requests. All routes are POST-only, matching the frontend's
  * apiCaller.js, which always does `fetch('/api/' + path, {method: 'POST'})`.
  * @param {import('./types').ApiRequest} req
@@ -45,6 +53,12 @@ export async function handleApiRequest(req, res, segments) {
       return successResponse(res, { accessToken, userId: user.id, email: user.email, name: user.name });
     }
     if (route === 'login') {
+      const { allowed, retryAfterSeconds } = checkRateLimit(getClientIp(req));
+      if (!allowed) {
+        return errorResponse(res, 'Demasiados intentos. Probá de nuevo más tarde.', 429, {
+          'retry-after': String(retryAfterSeconds),
+        });
+      }
       const user = authService.verifyLogin(body.email, body.password);
       const accessToken = authService.createSession(user.id);
       return successResponse(res, { accessToken, userId: user.id, email: user.email, name: user.name });

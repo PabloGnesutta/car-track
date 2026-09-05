@@ -6,10 +6,11 @@ import { SECURITY_HEADERS } from './securityHeaders.js';
  * @param {import('./types').ApiResponse} res
  * @param {string} msg
  * @param {number} [status=400] - Default 400
+ * @param {Object<string, string>} [headers]
  */
-export function errorResponse(res, msg, status = 400) {
+export function errorResponse(res, msg, status = 400, headers = {}) {
   debug(' @errorResponse:', msg);
-  res.writeHead(status, { 'content-type': 'application/json', ...SECURITY_HEADERS });
+  res.writeHead(status, { ...headers, 'content-type': 'application/json', ...SECURITY_HEADERS });
   return res.end(JSON.stringify({ error: msg }));
 }
 
