@@ -37,8 +37,12 @@ function allowTestEmail(email) {
  * @param {{ email?: string, password?: string }} [opts]
  */
 async function ensureAuth(page, { email, password = 'e2e-test-password' } = {}) {
+  // Boot starts with no auth stage, then 'checking' (auth form hidden in
+  // both), before settling on 'login' or 'ready' - checking visibility
+  // before that would wrongly skip signup.
+  await expect(page.locator('#app')).toHaveAttribute('data-auth-stage', /^(login|ready)$/);
   const emailInput = page.locator('#authForm input[name="authEmail"]');
-  if (!(await emailInput.isVisible().catch(() => false))) { return; }
+  if (!(await emailInput.isVisible())) { return; }
 
   const uniqueEmail = email || `e2e+${Date.now()}-${Math.random().toString(36).slice(2)}@test.local`;
   allowTestEmail(uniqueEmail);
@@ -58,10 +62,14 @@ async function ensureAuth(page, { email, password = 'e2e-test-password' } = {}) 
  */
 async function gotoApp(page) {
   await page.goto('/');
-  await page.waitForFunction(async () => {
+  // Wait until this page load itself went through the service worker, not
+  // just until a worker is active: on a first install initializeCache.js
+  // does a silent reload on 'controllerchange', and acting before it lands
+  // races the page being torn down and rebooted.
+  await page.waitForFunction(() => {
     if (!('serviceWorker' in navigator)) return true;
-    const reg = await navigator.serviceWorker.getRegistration();
-    return !!reg && !!reg.active;
+    const nav = /** @type {PerformanceNavigationTiming} */ (performance.getEntriesByType('navigation')[0]);
+    return !!navigator.serviceWorker.controller && nav.workerStart > 0;
   });
 }
 
