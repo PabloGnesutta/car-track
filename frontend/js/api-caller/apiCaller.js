@@ -1,4 +1,5 @@
 import { _error } from "../lib/logger.js";
+import { eventBus } from "../lib/utils.js";
 
 
 const ACCESS_TOKEN_KEY = 'accessToken';
@@ -67,6 +68,12 @@ async function apiCall(path, payload = {}) {
     });
     const body = await response.json().catch(() => ({}));
     if (!response.ok) {
+      // Our stored token expired (30-day TTL) or was revoked server-side -
+      // drop it and send the user back to the login screen.
+      if (response.status === 401 && token) {
+        clearSession();
+        eventBus.emit('SessionExpired', {});
+      }
       return { error: body.error || 'Error de red', status: response.status };
     }
     return { data: body.data };

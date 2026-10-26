@@ -129,7 +129,7 @@ async function deleteVehicle(vehicleKey) {
  */
 async function fetchVehicles() {
   const result = await apiCall('vehicles/fetch', {});
-  if (!result.data) { return { errorMsg: result.error }; }
+  if (!result.data) { return { errorMsg: result.error, status: result.status }; }
 
   const vehicles = result.data.map(vehicleFromApi);
   clearArray(dbStore.vehicles);

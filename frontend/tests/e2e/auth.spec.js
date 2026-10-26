@@ -86,3 +86,19 @@ test('logout returns to the auth screen and clears localStorage', async ({ page 
   const token = await page.evaluate(() => localStorage.getItem('accessToken'));
   expect(token).toBeNull();
 });
+
+test('an expired/revoked stored token falls back to the login screen instead of hanging on boot', async ({ page }) => {
+  await gotoApp(page);
+  // Simulates a token whose server-side session expired (30-day TTL) while
+  // still sitting in localStorage.
+  await page.evaluate(() => {
+    localStorage.setItem('accessToken', 'expired-or-revoked-token');
+    localStorage.setItem('legacyImportDone', 'true');
+  });
+  await page.reload();
+
+  await expect(page.locator('#authForm')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('#loadingSkeleton')).toHaveCount(0);
+  const token = await page.evaluate(() => localStorage.getItem('accessToken'));
+  expect(token).toBeNull();
+});

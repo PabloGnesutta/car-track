@@ -34,7 +34,7 @@ function clearObj(obj, omit = []) {
 }
 
 /**
- * @typedef {'IndexedDbInited'} Events
+ * @typedef {'IndexedDbInited'|'SessionExpired'} Events
  * @typedef {(payload: *)=>void} EventBusCallback
  */
 

@@ -1,3 +1,9 @@
+/* Above #loadingSkeleton (z-index 2000): boot can await a dialog (legacy
+   import prompt, connection error) before the skeleton is hidden. */
+.confirm-modal {
+  z-index: 2100;
+}
+
 .confirm-modal.show {
   opacity: 1;
   visibility: visible;
