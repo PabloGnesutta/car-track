@@ -40,17 +40,34 @@ function computeFuelEfficiency(entriesOldestFirst) {
 }
 
 /**
- * Overall average L/100km across all computable points (the first fill-up
+ * Overall average km/L across all computable points (the first fill-up
  * never counts — there's no prior reading to measure distance from).
+ * Total distance / total liters, not a plain mean of per-fill-up values.
  * @param {FuelEfficiencyPoint[]} points
  * @returns {number|null}
  */
-function averageFuelEfficiency(points) {
+function averageKmPerLiter(points) {
   const valid = points.filter(p => p.litersPer100Km !== null);
   const totalLiters = valid.reduce((sum, p) => sum + p.liters, 0);
   const totalDistance = valid.reduce((sum, p) => sum + /** @type {number} */(p.distance), 0);
-  return totalDistance > 0 ? (totalLiters / totalDistance) * 100 : null;
+  return totalLiters > 0 ? totalDistance / totalLiters : null;
+}
+
+/**
+ * Overall average fuel cost per km. Under the full-tank assumption, a
+ * fill-up's cost pays for the distance driven since the previous fill-up,
+ * so only points with both a computable distance and a recorded cost count
+ * (cost is optional — skipping cost-less points keeps them from diluting
+ * the average with "free" kilometers).
+ * @param {(FuelEfficiencyPoint & { cost?: number|null })[]} points
+ * @returns {number|null}
+ */
+function averageCostPerKm(points) {
+  const valid = points.filter(p => p.distance !== null && p.distance > 0 && typeof p.cost === 'number' && p.cost > 0);
+  const totalCost = valid.reduce((sum, p) => sum + /** @type {number} */(p.cost), 0);
+  const totalDistance = valid.reduce((sum, p) => sum + /** @type {number} */(p.distance), 0);
+  return totalDistance > 0 ? totalCost / totalDistance : null;
 }
 
 
-export { computeFuelEfficiency, averageFuelEfficiency };
+export { computeFuelEfficiency, averageKmPerLiter, averageCostPerKm };

@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { computeFuelEfficiency, averageFuelEfficiency } from '../../js/lib/fuelEconomy.js';
+import { computeFuelEfficiency, averageKmPerLiter, averageCostPerKm } from '../../js/lib/fuelEconomy.js';
 
 
 describe('computeFuelEfficiency', () => {
@@ -44,24 +44,59 @@ describe('computeFuelEfficiency', () => {
   });
 });
 
-describe('averageFuelEfficiency', () => {
+describe('averageKmPerLiter', () => {
   test('returns null when there is only one fill-up (nothing computable)', () => {
     const points = computeFuelEfficiency([{ mileage: 10000, liters: 40, date: new Date(2026, 0, 1) }]);
-    assert.equal(averageFuelEfficiency(points), null);
+    assert.equal(averageKmPerLiter(points), null);
   });
 
-  test('averages liters/distance across all fill-ups, not a plain mean of per-fillup values', () => {
-    // 400km/40L then 600km/30L -> combined 1000km/70L = 7 L/100km,
-    // NOT the plain average of 10 and 5 (which would wrongly give 7.5).
+  test('averages distance/liters across all fill-ups, not a plain mean of per-fillup values', () => {
+    // 400km/40L (10 km/L) then 600km/30L (20 km/L) -> combined 1000km/70L ~ 14.29 km/L,
+    // NOT the plain average of 10 and 20 (which would wrongly give 15).
     const points = computeFuelEfficiency([
       { mileage: 0, liters: 40, date: new Date(2026, 0, 1) },
       { mileage: 400, liters: 40, date: new Date(2026, 0, 8) },
       { mileage: 1000, liters: 30, date: new Date(2026, 0, 20) },
     ]);
-    assert.ok(Math.abs(averageFuelEfficiency(points) - 7) < 1e-9);
+    assert.ok(Math.abs(averageKmPerLiter(points) - 1000 / 70) < 1e-9);
   });
 
   test('returns null for an empty points list', () => {
-    assert.equal(averageFuelEfficiency([]), null);
+    assert.equal(averageKmPerLiter([]), null);
+  });
+});
+
+describe('averageCostPerKm', () => {
+  test('returns null when there is only one fill-up', () => {
+    const points = computeFuelEfficiency([{ mileage: 10000, liters: 40, cost: 50000, date: new Date(2026, 0, 1) }]);
+    assert.equal(averageCostPerKm(points), null);
+  });
+
+  test("divides total cost by total distance, ignoring the first fill-up's cost", () => {
+    // First fill-up's cost has no prior distance to attribute it to.
+    // 400km for $40000 + 600km for $30000 -> $70000 / 1000km = $70/km.
+    const points = computeFuelEfficiency([
+      { mileage: 0, liters: 40, cost: 99999, date: new Date(2026, 0, 1) },
+      { mileage: 400, liters: 40, cost: 40000, date: new Date(2026, 0, 8) },
+      { mileage: 1000, liters: 30, cost: 30000, date: new Date(2026, 0, 20) },
+    ]);
+    assert.ok(Math.abs(averageCostPerKm(points) - 70) < 1e-9);
+  });
+
+  test('skips fill-ups without a recorded cost (and their distance)', () => {
+    const points = computeFuelEfficiency([
+      { mileage: 0, liters: 40, date: new Date(2026, 0, 1) },
+      { mileage: 400, liters: 40, cost: null, date: new Date(2026, 0, 8) },
+      { mileage: 1000, liters: 30, cost: 30000, date: new Date(2026, 0, 20) },
+    ]);
+    assert.ok(Math.abs(averageCostPerKm(points) - 50) < 1e-9); // 30000 / 600
+  });
+
+  test('returns null when no fill-up has a cost', () => {
+    const points = computeFuelEfficiency([
+      { mileage: 0, liters: 40, date: new Date(2026, 0, 1) },
+      { mileage: 400, liters: 40, date: new Date(2026, 0, 8) },
+    ]);
+    assert.equal(averageCostPerKm(points), null);
   });
 });
