@@ -3,7 +3,7 @@ import { $, $form, $getInner, $new, $queryOne, $queryOneInput } from "../lib/dom
 import { _error } from "../lib/logger.js";
 import { dataState, dbStore, setStateField } from "../common/state.js";
 import { addFuelRecord, deleteFuelRecord, getFuelHistory } from "../local-db/fuel-db.js";
-import { computeFuelEfficiency, averageFuelEfficiency } from "../lib/fuelEconomy.js";
+import { computeFuelEfficiency, averageKmPerLiter, averageCostPerKm } from "../lib/fuelEconomy.js";
 import { haptic } from "../lib/haptics.js";
 import { showUndoToast } from "../lib/toast.js";
 import { svg_trash } from "../svg/svgFn.js";
@@ -13,7 +13,8 @@ import { fetchAndRenderMaintenanceItems } from "./maintenance-ui.js";
 
 const fuelHistoryModal = $('fuelHistoryModal');
 const fuelHistoryList = $getInner(fuelHistoryModal, '.fuel-history-list');
-const fuelAverageEl = $getInner(fuelHistoryModal, '.fuel-average .value');
+const fuelAverageEl = $getInner(fuelHistoryModal, '.fuel-average.efficiency .value');
+const fuelCostPerKmEl = $getInner(fuelHistoryModal, '.fuel-average.cost-per-km .value');
 const fuelEmptyEl = $getInner(fuelHistoryModal, '.fuel-empty');
 
 const fuelForm = $form('fuelForm');
@@ -29,8 +30,8 @@ fuelForm.addEventListener('submit', submitFuelForm);
 
 
 /**
- * Opens the fuel history modal for the current vehicle, with the L/100km
- * average and per-fill-up breakdown.
+ * Opens the fuel history modal for the current vehicle, with the km/L and
+ * $/km averages and per-fill-up breakdown.
  */
 async function openFuelHistory() {
   const vehicle = dataState.currentVehicle;
@@ -49,14 +50,19 @@ async function populateFuelHistory(vehicleKey) {
   if (!history.length) {
     fuelEmptyEl.classList.remove('display-none');
     fuelAverageEl.innerText = 'Sin datos';
+    fuelCostPerKmEl.innerText = 'Sin datos';
     return;
   }
   fuelEmptyEl.classList.add('display-none');
 
   const oldestFirst = history.slice().reverse();
   const points = computeFuelEfficiency(oldestFirst);
-  const average = averageFuelEfficiency(points);
-  fuelAverageEl.innerText = average !== null ? `${average.toFixed(1)} L/100km` : 'Sin datos suficientes';
+  const kmPerLiter = averageKmPerLiter(points);
+  fuelAverageEl.innerText = kmPerLiter !== null ? `${kmPerLiter.toLocaleString('es', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/L` : 'Sin datos suficientes';
+  const costPerKm = averageCostPerKm(points);
+  fuelCostPerKmEl.innerText = costPerKm !== null
+    ? `$${costPerKm.toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/km`
+    : 'Sin datos suficientes';
 
   // Render newest first, matching the fetched history order.
   points.slice().reverse().forEach(point => appendFuelHistoryRow(point));
