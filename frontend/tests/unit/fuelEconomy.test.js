@@ -8,26 +8,26 @@ describe('computeFuelEfficiency', () => {
     const points = computeFuelEfficiency([{ mileage: 10000, liters: 40, date: new Date(2026, 0, 1) }]);
     assert.equal(points.length, 1);
     assert.equal(points[0].distance, null);
-    assert.equal(points[0].litersPer100Km, null);
+    assert.equal(points[0].kmPerLiter, null);
   });
 
-  test('computes L/100km as liters-at-fillup / distance-since-previous * 100', () => {
+  test('computes km/L as distance-since-previous / liters-at-fillup', () => {
     const points = computeFuelEfficiency([
       { mileage: 10000, liters: 40, date: new Date(2026, 0, 1) },
-      { mileage: 10500, liters: 45, date: new Date(2026, 0, 15) }, // 500km, 45L -> 9 L/100km
+      { mileage: 10500, liters: 40, date: new Date(2026, 0, 15) }, // 500km, 40L -> 12.5 km/L
     ]);
     assert.equal(points[1].distance, 500);
-    assert.equal(points[1].litersPer100Km, 9);
+    assert.equal(points[1].kmPerLiter, 12.5);
   });
 
   test('chains correctly across more than two fill-ups', () => {
     const points = computeFuelEfficiency([
       { mileage: 0, liters: 40, date: new Date(2026, 0, 1) },
-      { mileage: 400, liters: 40, date: new Date(2026, 0, 8) }, // 400km, 40L -> 10 L/100km
-      { mileage: 1000, liters: 30, date: new Date(2026, 0, 20) }, // 600km, 30L -> 5 L/100km
+      { mileage: 400, liters: 40, date: new Date(2026, 0, 8) }, // 400km, 40L -> 10 km/L
+      { mileage: 1000, liters: 30, date: new Date(2026, 0, 20) }, // 600km, 30L -> 20 km/L
     ]);
-    assert.equal(points[1].litersPer100Km, 10);
-    assert.equal(points[2].litersPer100Km, 5);
+    assert.equal(points[1].kmPerLiter, 10);
+    assert.equal(points[2].kmPerLiter, 20);
   });
 
   test('returns null efficiency (not Infinity/NaN) when mileage did not increase', () => {
@@ -36,7 +36,7 @@ describe('computeFuelEfficiency', () => {
       { mileage: 10000, liters: 20, date: new Date(2026, 0, 5) }, // same mileage — odometer glitch/typo
     ]);
     assert.equal(points[1].distance, 0);
-    assert.equal(points[1].litersPer100Km, null);
+    assert.equal(points[1].kmPerLiter, null);
   });
 
   test('returns an empty array for no entries', () => {

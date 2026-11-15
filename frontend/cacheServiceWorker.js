@@ -9,7 +9,7 @@
 // - index.html, css/**, js/**, static/**) - don't hand-edit this, it's overwritten on the next
 // commit that touches any of those. See "Service worker caching" in CLAUDE.md for the one-time
 // `npm install` setup that wires the hook up (frontend/package.json's "prepare" script).
-const cacheVersion = 'v5042430ced2f';
+const cacheVersion = 'v4f342c6ce904';
 const appCache = cacheVersion + '__' + 'app-cache';
 const cacheWhitelist = [appCache];
 
