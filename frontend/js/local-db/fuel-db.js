@@ -9,7 +9,7 @@ import { apiCall } from "../api-caller/apiCaller.js";
 
 /**
  * Fuel Fill-up Record - DB Model. Each entry is assumed to be a full-tank
- * fill-up — the standard simplifying assumption that lets L/100km be
+ * fill-up — the standard simplifying assumption that lets km/L be
  * computed from consecutive odometer readings alone (see
  * lib/fuelEconomy.js), without needing a "was this a full tank" toggle in
  * the UI.

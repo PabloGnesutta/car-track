@@ -58,7 +58,7 @@ async function populateFuelHistory(vehicleKey) {
   const oldestFirst = history.slice().reverse();
   const points = computeFuelEfficiency(oldestFirst);
   const kmPerLiter = averageKmPerLiter(points);
-  fuelAverageEl.innerText = kmPerLiter !== null ? `${kmPerLiter.toLocaleString('es', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/L` : 'Sin datos suficientes';
+  fuelAverageEl.innerText = kmPerLiter !== null ? formatKmPerLiter(kmPerLiter) : 'Sin datos suficientes';
   const costPerKm = averageCostPerKm(points);
   fuelCostPerKmEl.innerText = costPerKm !== null
     ? `$${costPerKm.toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/km`
@@ -69,6 +69,13 @@ async function populateFuelHistory(vehicleKey) {
 }
 
 /**
+ * @param {number} kmPerLiter
+ */
+function formatKmPerLiter(kmPerLiter) {
+  return `${kmPerLiter.toLocaleString('es', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/L`;
+}
+
+/**
  * @param {import("../lib/fuelEconomy.js").FuelEfficiencyPoint} point
  */
 function appendFuelHistoryRow(point) {
@@ -76,7 +83,7 @@ function appendFuelHistoryRow(point) {
   const _mileage = $new({ class: 'mileage', text: `${point.mileage.toLocaleString('es')} km` });
   const _efficiency = $new({
     class: 'efficiency',
-    text: point.litersPer100Km !== null ? `${point.litersPer100Km.toFixed(1)} L/100km` : '—',
+    text: point.kmPerLiter !== null ? formatKmPerLiter(point.kmPerLiter) : '—',
   });
   const _meta = $new({ class: 'liters', text: `${point.liters.toLocaleString('es')} L · ${timeAgo(point.date)}` });
   const _rightSide = $new({ class: 'right-side', children: [_efficiency, _meta] });
@@ -152,7 +159,7 @@ async function submitFuelForm(e) {
  * expires (until then only the in-memory cache changes, so "undo" is a pure
  * local restore with no network call) - same convention as
  * tryDeleteServiceRecord. Re-renders the whole list rather than patching
- * one row out, since L/100km and the average depend on the full sequence
+ * one row out, since km/L and the averages depend on the full sequence
  * of remaining fill-ups.
  * @param {string} fuelKey
  */
